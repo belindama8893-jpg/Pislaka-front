@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>10 Marla Villa in DHA Phase 5 · Pislaka</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%2312c8b6'/%3E%3Cpath d='M11 8h6.2c4.1 0 6.8 2.3 6.8 5.9 0 3.8-2.8 6.1-7 6.1h-1.8v4H11V8Zm4.2 3.6v4.8h1.7c1.8 0 2.8-.8 2.8-2.4 0-1.5-1-2.4-2.8-2.4h-1.7Z' fill='white'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./public-listing.css" />
+    <style>
+      :root {
+        --text: #29423f;
+        --muted: #667975;
+        --border: rgba(28, 57, 52, 0.12);
+        --border-soft: rgba(28, 57, 52, 0.08);
+        --primary: #12c8b6;
+        --primary-hover: #0f9d91;
+        --primary-light: #eafaf7;
+        --background: #f8fbfa;
+        --shadow: 0 12px 34px rgba(25, 55, 49, 0.08);
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: var(--background); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      button, input, select, textarea { font: inherit; }
+      button { cursor: pointer; }
+      svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+
+      .public-gallery-item { display: block; }
+      .public-gallery-item img { display: block; }
+      .public-share-button svg, .public-page-trust svg, .public-key-facts svg, .public-facts-grid svg,
+      .public-broker-card svg, .public-contact-actions svg, .public-mobile-contact-bar svg,
+      .public-section-title-row svg, .public-listing-note svg { flex: 0 0 auto; }
+
+      .public-static-map iframe { display: block; width: 100%; height: 100%; border: 0; filter: saturate(.72) contrast(.96); }
+      .public-static-map-pin { pointer-events: none; }
+
+      .lead-capture-form { display: grid; gap: 10px; margin-top: 16px; }
+      .lead-capture-form label { display: grid; gap: 5px; color: var(--muted); font-size: .78rem; font-weight: 500; }
+      .lead-capture-form input, .lead-capture-form select, .lead-capture-form textarea { width: 100%; min-height: 38px; padding: 8px 10px; color: var(--text); background: rgba(255,255,255,.82); border: 1px solid var(--border); border-radius: 8px; outline: 0; }
+      .lead-capture-form input:focus, .lead-capture-form select:focus, .lead-capture-form textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+      .lead-capture-form textarea { min-height: 86px; resize: vertical; }
+      .lead-capture-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+      .primary-button { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; padding: 0 14px; color: #fff; background: var(--primary); border: 1px solid var(--primary); border-radius: 9px; font-weight: 500; }
+      .primary-button:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+      .primary-button:disabled { cursor: default; opacity: .72; }
+      .form-status { margin: 0; color: var(--muted); font-size: .72rem; line-height: 1.45; text-align: center; }
+      .form-status.success { color: var(--primary-hover); font-weight: 500; }
+      .lead-panel-eyebrow { display: inline-flex; margin-bottom: 8px; color: var(--primary); font-size: .76rem; font-weight: 550; text-transform: uppercase; }
+      .public-feature-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+      .public-feature-list span { padding: 5px 8px; color: var(--muted); background: rgba(247,249,251,.88); border: 1px solid var(--border-soft); border-radius: 999px; font-size: .76rem; }
+
+      .sidebar-broker-section { padding: 16px 0 1px; }
+      .sidebar-broker-section .lead-panel-eyebrow { margin: 0 0 10px; }
+      .public-lead-panel .sidebar-broker-card { grid-template-columns: 62px minmax(0,1fr); gap: 13px; margin: 0; }
+      .public-lead-panel .sidebar-broker-card .public-broker-avatar { width: 60px; height: 60px; font-size: 1rem; }
+      .public-lead-panel .sidebar-broker-card h2 { color: var(--text); font-size: 1.08rem; line-height: 1.2; }
+      .public-lead-panel .sidebar-broker-card p { font-size: .75rem; }
+      .public-lead-panel .sidebar-broker-card .public-broker-tags { margin-top: 8px; }
+
+      .public-gallery-modal[hidden] { display: none; }
+      .public-gallery-modal-stage img { max-width: min(1180px,calc(100vw - 120px)); max-height: calc(100vh - 100px); object-fit: contain; }
+
+      @media (max-width: 820px) {
+        .lead-capture-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="public-listing-page public-listing-upgraded">
+      <header class="public-page-header">
+        <a class="public-page-brand" href="https://www.pislaka.com" rel="noreferrer" target="_blank"><img alt="Pislaka" src="./assets/logo.png" /></a>
+        <div class="public-page-trust">
+          <span><i data-lucide="building-2"></i> Pislaka property listing</span>
+          <span id="channel-label">Campaign link</span>
+          <button class="public-share-button" id="share-button" type="button"><i data-lucide="share-2"></i><span>Share</span></button>
+        </div>
+      </header>
+
+      <div class="public-listing-container">
+        <div class="public-gallery count-5" id="property-gallery">
+          <button aria-label="Open property media 1 of 5" class="public-gallery-item item-1" type="button"><img alt="DHA Phase 5 villa exterior" src="./assets/photos/villa-exterior.jpg" /></button>
+          <button aria-label="Open property media 2 of 5" class="public-gallery-item item-2" type="button"><img alt="Villa living room" src="./assets/photos/villa-living-room.jpg" /></button>
+          <button aria-label="Open property media 3 of 5" class="public-gallery-item item-3" type="button"><img alt="Villa kitchen" src="./assets/photos/villa-kitchen.jpg" /></button>
+          <button aria-label="Open property media 4 of 5" class="public-gallery-item item-4" type="button"><img alt="Villa bedroom" src="./assets/photos/villa-bedroom.jpg" /></button>
+          <button aria-label="Open property media 5 of 5" class="public-gallery-item item-5" type="button"><img alt="Villa interior detail" src="./assets/photos/villa-detail.jpg" /></button>
+          <button class="public-gallery-all" id="view-all" type="button"><i data-lucide="images"></i> View all 5 photos</button>
+        </div>
+
+        <section class="public-listing-intro">
+          <div>
+            <span class="public-listing-status">For sale</span>
+            <h1>10 Marla Villa in DHA Phase 5, Lahore</h1>
+            <p class="public-listing-address"><i data-lucide="map-pin"></i><span>Villa</span><a href="https://www.openstreetmap.org/?mlat=31.4697&amp;mlon=74.4098#map=16/31.4697/74.4098" rel="noreferrer" target="_blank">View map</a></p>
+          </div>
+          <strong class="public-listing-price">PKR 8.5 Crore</strong>
+        </section>
+
+        <div class="public-key-facts" aria-label="Property highlights">
+          <span><i data-lucide="bed-double"></i><strong>4</strong><small>Beds</small></span>
+          <span><i data-lucide="bath"></i><strong>5</strong><small>Baths</small></span>
+          <span><i data-lucide="ruler"></i><strong>10 Marla</strong><small>Area</small></span>
+          <span><i data-lucide="house"></i><strong>Villa</strong><small>Type</small></span>
+        </div>
+
+        <div class="public-listing-content-layout">
+          <div class="public-listing-content">
+            <section class="public-detail-section public-overview-section">
+              <span class="public-section-kicker">Property overview</span>
+              <h2>About this property</h2>
+              <p>Family-ready 10 Marla villa in DHA Phase 5 with a renovated kitchen, generous living areas and easy access to the neighbourhood park.
+
+The home offers four bedrooms, five bathrooms, two-car parking and well-kept indoor and outdoor spaces. Contact the broker to confirm availability and arrange a private viewing.</p>
+            </section>
+
+            <section class="public-detail-section">
+              <span class="public-section-kicker">At a glance</span>
+              <h2>Facts &amp; features</h2>
+              <div class="public-facts-grid">
+                <span><i data-lucide="bed-double"></i><small>Bedrooms</small><strong>4</strong></span>
+                <span><i data-lucide="bath"></i><small>Bathrooms</small><strong>5</strong></span>
+                <span><i data-lucide="ruler"></i><small>Property size</small><strong>10 Marla</strong></span>
+                <span><i data-lucide="building-2"></i><small>Property type</small><strong>Villa</strong></span>
+                <span><i data-lucide="house"></i><small>Listing type</small><strong>For sale</strong></span>
+                <span><i data-lucide="map-pin"></i><small>City</small><strong>Lahore</strong></span>
+              </div>
+              <div class="public-feature-list upgraded"><span>Renovated kitchen</span><span>Two-car parking</span><span>Near park</span><span>Servant quarter</span><span>Secure community</span></div>
+            </section>
+
+            <section class="public-detail-section public-location-section">
+              <span class="public-section-kicker">Location</span>
+              <div class="public-section-title-row">
+                <div><h2>DHA Phase 5, Lahore</h2><p>Confirm the exact viewing location with the broker.</p></div>
+                <a href="https://www.openstreetmap.org/?mlat=31.4697&amp;mlon=74.4098#map=16/31.4697/74.4098" rel="noreferrer" target="_blank"><i data-lucide="map-pin"></i> Open map</a>
+              </div>
+              <div class="public-static-map">
+                <iframe loading="lazy" title="Map of DHA Phase 5" src="https://www.openstreetmap.org/export/embed.html?bbox=74.3998%2C31.4597%2C74.4198%2C31.4797&amp;layer=mapnik&amp;marker=31.4697%2C74.4098"></iframe>
+                <span class="public-static-map-pin"><i data-lucide="map-pin"></i></span>
+                <a href="https://www.openstreetmap.org/copyright" rel="noreferrer" target="_blank">© OpenStreetMap</a>
+              </div>
+            </section>
+
+            <p class="public-listing-note"><i data-lucide="calendar-clock"></i> Listing information updated 4 Aug 2026. Confirm price and availability with the broker.</p>
+          </div>
+
+          <aside class="public-lead-panel upgraded" id="inquiry">
+            <div class="public-lead-price-row"><span>For sale</span><strong>PKR 8.5 Crore</strong></div>
+            <section class="sidebar-broker-section" aria-label="Listing broker">
+              <span class="lead-panel-eyebrow">Listed by</span>
+              <div class="public-broker-card wide sidebar-broker-card">
+                <span class="public-broker-avatar">AK</span>
+                <div><h2>Ayesha Khan</h2><p>Prime Estates</p><div class="public-broker-tags"><span><i data-lucide="badge-check"></i> Pislaka broker profile</span><span>Lahore based</span></div></div>
+              </div>
+            </section>
+            <div class="public-contact-actions"><a href="https://wa.me/923005550188" rel="noreferrer" target="_blank"><i data-lucide="message-circle"></i> WhatsApp</a><a href="tel:+923005550188"><i data-lucide="phone"></i> Call</a></div>
+            <div class="public-inquiry-heading"><span class="lead-panel-eyebrow">Request details or a viewing</span><h2>Ask about this property</h2><p>The form is sent directly to Ayesha. Required fields are kept short.</p></div>
+            <form class="lead-capture-form" id="lead-form">
+              <div class="lead-capture-required-grid">
+                <label><span>Name</span><input name="name" autocomplete="name" value="Aqsa Ali" required /></label>
+                <label><span>Phone / WhatsApp</span><input name="phone" type="tel" autocomplete="tel" value="+92 300 555 0199" required /></label>
+              </div>
+              <label><span>Message</span><textarea name="message">I am interested in this DHA Phase 5 villa. Please arrange a viewing.</textarea></label>
+              <span class="lead-form-optional-heading">Optional details help the broker respond faster</span>
+              <div class="lead-capture-grid">
+                <label><span>Viewing</span><select name="viewing"><option>This weekend</option><option>Tomorrow</option><option>Next week</option></select></label>
+                <label><span>Need</span><select name="need"><option>Family home</option><option>Investment</option><option>Buying for self</option></select></label>
+                <label><span>Budget</span><input name="budget" value="PKR 8–9 Crore" /></label>
+                <label><span>Email</span><input name="email" type="email" placeholder="Optional" /></label>
+              </div>
+              <button class="primary-button" type="submit">Send inquiry to Ayesha</button>
+              <small class="lead-form-trust">Your inquiry will be linked to this property and sent directly to Ayesha.</small>
+              <p class="form-status" id="form-status" aria-live="polite"></p>
+            </form>
+          </aside>
+        </div>
+      </div>
+
+      <nav aria-label="Contact broker" class="public-mobile-contact-bar"><a href="https://wa.me/923005550188" rel="noreferrer" target="_blank"><i data-lucide="message-circle"></i> WhatsApp</a><a href="tel:+923005550188"><i data-lucide="phone"></i> Call</a><a class="primary" href="#inquiry">Send inquiry</a></nav>
+    </main>
+
+    <div class="public-gallery-modal" id="gallery-modal" role="dialog" aria-modal="true" aria-label="Property photo gallery" hidden>
+      <header><span id="gallery-position">1 / 5</span><button aria-label="Close gallery" id="gallery-close" type="button"><i data-lucide="x"></i></button></header>
+      <div class="public-gallery-modal-stage"><button aria-label="Previous photo" class="previous" id="gallery-previous" type="button"><i data-lucide="chevron-left"></i></button><img alt="Property gallery preview" id="gallery-image" /><button aria-label="Next photo" class="next" id="gallery-next" type="button"><i data-lucide="chevron-right"></i></button></div>
+    </div>
+
+    <script src="./assets/lucide.min.js"></script>
+    <script>
+      if (window.lucide) window.lucide.createIcons();
+
+      const params = new URLSearchParams(location.search);
+      const campaign = params.get("campaign") || "dha5-demo";
+      const channel = params.get("channel") || "Campaign";
+      document.getElementById("channel-label").textContent = `${channel} link`;
+
+      const galleryButtons = Array.from(document.querySelectorAll(".public-gallery-item"));
+      const galleryUrls = galleryButtons.map((button) => button.querySelector("img").src);
+      const modal = document.getElementById("gallery-modal");
+      const modalImage = document.getElementById("gallery-image");
+      const modalPosition = document.getElementById("gallery-position");
+      let activeIndex = 0;
+
+      function showGallery(index) {
+        activeIndex = (index + galleryUrls.length) % galleryUrls.length;
+        modalImage.src = galleryUrls[activeIndex];
+        modalPosition.textContent = `${activeIndex + 1} / ${galleryUrls.length}`;
+        modal.hidden = false;
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeGallery() { modal.hidden = true; document.body.style.overflow = ""; }
+      galleryButtons.forEach((button, index) => button.addEventListener("click", () => showGallery(index)));
+      document.getElementById("view-all").addEventListener("click", () => showGallery(0));
+      document.getElementById("gallery-close").addEventListener("click", closeGallery);
+      document.getElementById("gallery-previous").addEventListener("click", () => showGallery(activeIndex - 1));
+      document.getElementById("gallery-next").addEventListener("click", () => showGallery(activeIndex + 1));
+      document.addEventListener("keydown", (event) => { if (modal.hidden) return; if (event.key === "Escape") closeGallery(); if (event.key === "ArrowLeft") showGallery(activeIndex - 1); if (event.key === "ArrowRight") showGallery(activeIndex + 1); });
+
+      document.getElementById("share-button").addEventListener("click", async (event) => {
+        const button = event.currentTarget;
+        try { await navigator.clipboard.writeText(location.href); button.querySelector("span").textContent = "Link copied"; }
+        catch { button.querySelector("span").textContent = "Copy link"; }
+      });
+
+      document.getElementById("lead-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const data = new FormData(form);
+        const payload = { eventId: `lead-${Date.now()}`, type: "pislaka-demo-lead", name: data.get("name"), phone: data.get("phone"), listing: "10 Marla Villa · DHA Phase 5", campaign, channel, createdAt: new Date().toISOString() };
+        try { localStorage.setItem("pislaka-demo-lead", JSON.stringify(payload)); } catch {}
+        try { if ("BroadcastChannel" in window) { const bus = new BroadcastChannel("pislaka-demo-events"); bus.postMessage(payload); bus.close(); } } catch {}
+        try { if (window.opener && !window.opener.closed) window.opener.postMessage(payload, "*"); } catch {}
+        const submit = form.querySelector("button[type=submit]");
+        submit.disabled = true;
+        submit.innerHTML = '<svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-9"/></svg> Sent';
+        const status = document.getElementById("form-status");
+        status.className = "form-status success";
+        status.textContent = "Inquiry sent. Ayesha has received a new Lead notification.";
+      });
+    </script>
+  </body>
+</html>
