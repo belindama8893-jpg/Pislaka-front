@@ -14,7 +14,7 @@
 6. 访问权限默认 Member，可选 Admin；业务角色默认 Agent，可选 Manager。仅 Manager 展示 Management Scope，至少选一个节点，每节点单独 Include sub-units。
 7. 无子单元时不显示成员归属字段，自动归属组织根；存在子单元时通过收起的 Assign to unit 可选设置。归属与管理范围分别保存。
 8. Review → Complete → Team Agent；Settings 可编辑 Details、Structure、Members。浏览器刷新保留进度和邀请。
-9. 页面不出现 Demo、mock、本地保存、权限解释和常驻成功提示；保留错误、删除确认、Pending 状态与短暂成功反馈。重置入口已从产品页面移除；开发调试可清除 localStorage 中的专用键。
+9. 页面不出现 Demo、mock、本地保存、权限解释和常驻成功提示；保留错误、删除确认、Pending 状态与短暂成功反馈。为方便反复演示，有组织时在 Team 页面底部提供 Reset organization；确认后仅清除本浏览器的组织、单元、成员、邀请和设置进度，返回创建起点。
 10. 原生 select 已替换为页面内下拉；保留底层表单值，菜单跟随字段宽度，空间不足时向上展开，支持方向键、Home/End、Enter、Escape、Tab 和点击外部关闭。
 
 ### 演示邮箱与边界

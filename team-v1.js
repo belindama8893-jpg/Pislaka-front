@@ -35,6 +35,7 @@
     else if (page === 'home' && state.complete) html = header('Your Team Agent',`A shared view of ${esc(state.org.name)}.`,btn('Organization Settings','settings')) + `<div class="tv-grid"><div class="tv-card"><h3>Organization</h3><p>${esc(state.org.name)}</p></div><div class="tv-card"><h3>Members</h3><div class="tv-stat">${state.members.length}</div></div><div class="tv-card"><h3>Managers</h3><div class="tv-stat">${state.members.filter(m=>m.role==='Manager').length}</div></div></div><div class="tv-card"><span class="tv-kicker">Start a conversation</span><h2 style="margin-top:12px">What needs your team's attention?</h2><div class="tv-grid">${['What are my team priorities today?','Which agents need follow-up support?','How is each branch performing?'].map((q,i)=>btn(q,'question','tv-template',`data-id="${i}"`)).join('')}</div>${answer ? `<div class="tv-note tv-answer" role="status">${esc(answer)}</div>` : ''}</div>`;
     else if (page === 'settings') html = header('Organization Settings',esc(state.org.name),btn('← Team Agent','home')) + `<div class="tv-settings-toolbar"><nav class="tv-tabs" aria-label="Organization settings">${[['details','Details'],['structure','Structure'],['members','Members']].map(([id,label])=>btn(label,'tab','',`data-id="${id}" ${tab===id?'aria-current="page"':''}`)).join('')}</nav>${tab === 'details' ? '' : addAction(tab)}</div>${tab === 'details' ? organizationForm() : tab === 'structure' ? structure() : members()}`;
     else html = header('Set up your organization','',btn('Save & exit','exit')) + `<ol class="tv-steps">${stepNames.map((s,i)=>`<li class="${state.step===i+1?'current':''}" ${state.step===i+1?'aria-current="step"':''}><span>0${i+1}</span>${s}</li>`).join('')}</ol>${state.step === 1 ? organizationForm() : state.step === 2 ? structure() : state.step === 3 ? members() : review()}${state.step>1 ? `<div class="tv-footer">${btn('← Back','back')}${btn(state.step===4?'Complete setup →':'Continue →','next','primary')}</div>` : ''}`;
+    if(state.org) html += `<div class="tv-section-toolbar">${btn('<i data-lucide="rotate-ccw" aria-hidden="true"></i>Reset organization','reset-organization','listing-action')}</div>`;
     root.innerHTML = html + `<p class="tv-status" role="status">${esc(status)}</p><dialog id="tv-dialog" aria-labelledby="tv-dialog-title"></dialog>`;
     root.querySelector('#tv-org-form')?.addEventListener('submit', e => {
       e.preventDefault(); const f = new FormData(e.target); const name = f.get('name').trim();
@@ -178,6 +179,14 @@
       if(!member || member.access==='Owner' || member.id==='self')return;
       modal('Remove member?',`<p>Remove ${esc(member.name)} from ${esc(state.org.name)}?</p><p>Their Pislaka account will remain available.</p>`,(f,d)=>{state.members=state.members.filter(m=>m.id!==id);d.close();save();render();flash('Member removed');});
       const submit=root.querySelector('dialog [type=submit]');submit.textContent='Remove';submit.className='listing-action confirm-danger';return;
+    }
+    if(a==='reset-organization'){
+      modal('Reset organization?', '<p>This clears the organization, units, members and pending invitations saved in this browser so you can start again.</p>', (f,d)=>{
+        d.close();clearTimeout(toastTimer);
+        state={version:1,org:null,units:[],members:[],invites:[],step:0,complete:false};
+        page='setup';tab='structure';answer='';status='';save();render(true);
+      });
+      const submit=root.querySelector('dialog [type=submit]');submit.textContent='Reset organization';submit.className='listing-action confirm-danger';return;
     }
     if(a==='exit'){save();showView('home');return;}
     if(a==='start'){state.step=1;page='setup';}
