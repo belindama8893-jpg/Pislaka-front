@@ -103,3 +103,15 @@
 .tv-section-toolbar { display:flex; justify-content:flex-end; margin-bottom:18px; }
 .tv-actions { gap:8px; }
 @media(max-width:700px) { .tv-settings-toolbar>.listing-action { margin-left:auto; } }
+.tv-scope { max-height:310px; }
+.tv-scope-tree { list-style:none; padding:0; margin:0; }
+.tv-scope-tree .tv-scope-tree { margin-left:8px; padding-left:18px; border-left:1px solid var(--border-color); }
+.tv-scope-tree .tv-scope-row { border:0; padding:6px 0; }
+.tv-scope-tree .tv-check { margin:6px 0; }
+.tv-scope-tree strong { font-weight:500; }
+.tv-scope-inherited { margin-left:25px; font-size:11px!important; }
+.tv-scope-inherited:empty { display:none; }
+.team-view .tv-scope-include { margin-left:25px; font-size:12px; color:var(--muted); }
+.team-view .tv-scope-include[hidden] { display:none; }
+.tv-scope-tree .is-inherited { color:var(--muted); }
+.tv-scope-tree input:disabled { opacity:.65; }

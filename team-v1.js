@@ -123,10 +123,23 @@
   }
   function editMember(id) {
     const m=state.members.find(x=>x.id===id);
-    const allUnits=[{id:'org',name:state.org.name},...state.units.map(x=>({id:x.id,name:path(x.id)}))];
+    // Explicit grants stay separate from inherited coverage, including while covered by an ancestor.
+    const grants = new Map((m?.scopes || []).map(s=>[s.unitId, {...s}]));
+    const scopeNodes = [{id:'org',name:state.org.name,parentId:null},...state.units];
+    function inheritedFrom(id) {
+      let parent=scopeNodes.find(u=>u.id===id)?.parentId;
+      while(parent) {
+        if(grants.get(parent)?.includeSubUnits)return parent;
+        parent=scopeNodes.find(u=>u.id===parent)?.parentId;
+      }
+      return null;
+    }
+    function scopeTree(parent=null) {
+      return `<ul class="tv-scope-tree">${scopeNodes.filter(u=>u.parentId===parent).map(u=>`<li><div class="tv-scope-row" data-scope-id="${u.id}"><label class="tv-check"><input type="checkbox" name="scope" value="${u.id}" aria-label="${esc(path(u.id))}"><strong>${esc(u.name)}</strong></label><small class="tv-scope-inherited"></small><label class="tv-check tv-scope-include"><input type="checkbox" name="include-${u.id}" aria-label="Include sub-units of ${esc(path(u.id))}">Include sub-units</label></div>${scopeNodes.some(x=>x.parentId===u.id)?scopeTree(u.id):''}</li>`).join('')}</ul>`;
+    }
     let matched = null;
-    modal(m?'Edit member':'Add member',`<label>Email<input type="email" name="email" required autocomplete="off" maxlength="254" placeholder="name@example.com" value="${esc(m?.email || '')}" ${m?'readonly':''}></label><div id="tv-account-result" aria-live="polite"></div>${state.units.length?`<details class="tv-advanced" ${m?.unitId!=='org'&&m?'open':''}><summary>Assign to unit</summary><label>Organization Unit<select name="unitId">${unitOptions(m?.unitId || 'org')}</select></label></details>`:'<input type="hidden" name="unitId" value="org">'}<div class="tv-grid two"><label>Organization Access<select name="access">${options(id==='self'?['Owner']:['Admin','Member'],m?.access || 'Member')}</select></label><label>Business Role<select name="role">${options(['Agent','Manager'],m?.role || 'Agent')}</select></label></div><div id="tv-management" ${m?.role==='Manager'?'':'hidden'}><h3>Management Scope</h3><div class="tv-scope">${allUnits.map(u=>{const s=m?.scopes.find(s=>s.unitId===u.id);return `<div class="tv-scope-row"><label class="tv-check"><input type="checkbox" name="scope" value="${u.id}" ${s?'checked':''}>${esc(u.name)}</label><label class="tv-check"><input type="checkbox" name="include-${u.id}" ${s?.includeSubUnits?'checked':''} ${s?'':'disabled'}>Include sub-units</label></div>`;}).join('')}</div></div>`, (f,d)=>{
-      const role=f.get('role'), selected=f.getAll('scope');
+    modal(m?'Edit member':'Add member',`<label>Email<input type="email" name="email" required autocomplete="off" maxlength="254" placeholder="name@example.com" value="${esc(m?.email || '')}" ${m?'readonly':''}></label><div id="tv-account-result" aria-live="polite"></div>${state.units.length?`<details class="tv-advanced" ${m?.unitId!=='org'&&m?'open':''}><summary>Assign to unit</summary><label>Organization Unit<select name="unitId">${unitOptions(m?.unitId || 'org')}</select></label></details>`:'<input type="hidden" name="unitId" value="org">'}<div class="tv-grid two"><label>Organization Access<select name="access">${options(id==='self'?['Owner']:['Admin','Member'],m?.access || 'Member')}</select></label><label>Business Role<select name="role">${options(['Agent','Manager'],m?.role || 'Agent')}</select></label></div><div id="tv-management" ${m?.role==='Manager'?'':'hidden'}><h3>Management Scope</h3><div class="tv-scope">${scopeTree()}</div></div>`, (f,d)=>{
+      const role=f.get('role'), selected=[...grants.keys()];
       const email=f.get('email').trim().toLowerCase();
       const error=text=>d.querySelector('#tv-form-error').textContent=text;
       if(!m&&state.members.some(x=>x.email.toLowerCase()===email)){error('Already a member.');return;}
@@ -134,7 +147,7 @@
       const account=directory.find(x=>x.email===email);
       if(!m&&account&&matched!==email){error('Select the matching account to continue.');return;}
       if(role==='Manager'&&!selected.length){error('Select at least one management unit.');return;}
-      const value={id:m?.id || uid(),email,name:m?.name || account?.name || email,unitId:f.get('unitId'),access:f.get('access'),role,scopes:role==='Manager'?selected.map(unitId=>({unitId,includeSubUnits:f.has(`include-${unitId}`)})):[]};
+      const value={id:m?.id || uid(),email,name:m?.name || account?.name || email,unitId:f.get('unitId'),access:f.get('access'),role,scopes:role==='Manager'?selected.map(unitId=>({...grants.get(unitId)})):[]};
       if(m) Object.assign(m,value);
       else if(account) state.members.push(value);
       else state.invites.push({...value,status:'pending',sentAt:new Date().toISOString()});
@@ -161,7 +174,29 @@
     emailInput.addEventListener('input',lookup);
     if(!m)lookup();
     d.querySelector('[name=role]').addEventListener('change',e=>d.querySelector('#tv-management').hidden=e.target.value!=='Manager');
-    d.querySelectorAll('[name=scope]').forEach(c=>c.addEventListener('change',()=>{const include=c.closest('.tv-scope-row').querySelector('[name^=include]');include.disabled=!c.checked;if(!c.checked)include.checked=false;}));
+    function updateScopeTree() {
+      d.querySelectorAll('[data-scope-id]').forEach(row=>{
+        const id=row.dataset.scopeId, source=inheritedFrom(id), grant=grants.get(id);
+        const check=row.querySelector('[name=scope]'), include=row.querySelector('[name^=include]');
+        check.checked=!!source || !!grant;check.disabled=!!source;
+        include.checked=!!source || !!grant?.includeSubUnits;include.disabled=!!source || !grant;
+        row.classList.toggle('is-inherited',!!source);
+        row.querySelector('.tv-scope-inherited').textContent=source?`Inherited from ${scopeNodes.find(u=>u.id===source).name}`:'';
+        row.querySelector('.tv-scope-include').hidden=!!source;
+      });
+    }
+    d.querySelectorAll('[data-scope-id]').forEach(row=>{
+      const id=row.dataset.scopeId;
+      row.querySelector('[name=scope]').addEventListener('change',e=>{
+        if(e.target.checked)grants.set(id,{unitId:id,includeSubUnits:false});else grants.delete(id);
+        updateScopeTree();
+      });
+      row.querySelector('[name^=include]').addEventListener('change',e=>{
+        if(grants.has(id))grants.get(id).includeSubUnits=e.target.checked;
+        updateScopeTree();
+      });
+    });
+    updateScopeTree();
   }
   root.addEventListener('click',e=>{
     const b=e.target.closest('[data-action]'); if(!b)return; const a=b.dataset.action,id=b.dataset.id;
