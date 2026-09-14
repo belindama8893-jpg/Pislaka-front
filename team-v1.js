@@ -6,6 +6,7 @@
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const uid = () => crypto.randomUUID();
   let state = {version:1, org:null, units:[], members:[], step:0, complete:false};
+  let drawerUnit = null;
   let page = 'setup', tab = 'structure', status = '', answer = '';
   try { const saved = JSON.parse(localStorage.getItem(KEY)); if (saved?.version === 1 && Array.isArray(saved.units) && Array.isArray(saved.members)) state = saved; } catch { status = 'Saved organization data could not be read.'; }
   state.invites ||= [];
@@ -24,20 +25,24 @@
   const stepNames = ['Organization','Structure','Members'];
   function header(title, copy, action='') { return `<header class="tv-header"><div><span class="tv-kicker">Pislaka / Team</span><h1 tabindex="-1">${title}</h1>${copy ? `<p>${copy}</p>` : ''}</div>${action}</header>`; }
   const deleteButton = (label, action, id) => btn('<i data-lucide="trash-2" aria-hidden="true"></i>',action,'listing-action danger icon-only',`data-id="${id}" aria-label="${esc(label)}" data-tooltip="${esc(label)}"`);
+  function nodeActions(id) {
+    const name=id==='org'?state.org.name:state.units.find(u=>u.id===id).name;
+    return `${btn('<i data-lucide="plus" aria-hidden="true"></i>','add-child','listing-action icon-only',`data-id="${id}" aria-label="Add unit under ${esc(name)}" data-tooltip="Add sub-unit"`)}${btn(`Members · ${state.members.filter(m=>m.unitId===id).length}`,'unit-members','listing-action',`data-id="${id}" aria-label="Members of ${esc(name)}"`)}${id==='org'?'':`<details class="tv-node-menu"><summary aria-label="More actions for ${esc(name)}">⋯</summary><div>${btn('Edit unit','edit-unit','listing-action',`data-id="${id}"`)}${deleteButton('Delete unit','remove-unit',id)}</div></details>`}`;
+  }
   const addAction = kind => btn(`<i data-lucide="plus" aria-hidden="true"></i>${kind === 'structure' ? 'Add Organization Unit' : 'Add member'}`,kind === 'structure' ? 'add-unit' : 'add-member','listing-action primary');
-  const sectionAction = kind => page === 'settings' ? '' : `<div class="tv-section-toolbar">${addAction(kind)}</div>`;
-  function tree(parent = 'org') { return state.units.filter(u => u.parentId === parent).map(u => `<li><div class="tv-node"><div><strong>${esc(u.name)}</strong><small>${esc(u.type)}</small></div><div class="tv-actions">${btn('Edit','edit-unit','listing-action',`data-id="${u.id}"`)}${deleteButton('Delete unit','remove-unit',u.id)}</div></div><ul>${tree(u.id)}</ul></li>`).join(''); }
-  function structure() { return `${sectionAction('structure')}<div class="tv-card"><div class="tv-row"><div><h2>Organization structure</h2></div></div>${!state.units.length ? `<div class="tv-grid">${[['simple','Simple Team','One team, with room to grow.'],['branches','Teams & Branches','A branch with a team inside.'],['custom','Custom Structure','Build your own hierarchy.']].map(([id,title,desc]) => btn(`<strong>${title}</strong>`,'template','tv-template',`data-id="${id}"`)).join('')}</div>` : ''}<ul class="tv-tree"><li><div class="tv-node"><div><strong>${esc(state.org.name)}</strong></div></div><ul>${tree()}</ul></li></ul></div>`; }
-  function members() { return `${sectionAction('members')}<div class="tv-card"><div class="tv-row"><h2>Members</h2></div>${state.members.map(m => `<div class="tv-member"><div class="tv-row"><div class="tv-person"><span class="tv-avatar">${esc(m.name.split(' ').map(w=>w[0]).slice(0,2).join(''))}</span><div><strong>${esc(m.name)}${m.id==='self'?' (you)':''}</strong><small>${esc(m.email)}</small>${m.unitId!=='org'?`<small>${esc(path(m.unitId))}</small>`:''}</div></div><div class="tv-actions">${btn('Edit','edit-member','listing-action',`data-id="${m.id}"`)}${m.access !== 'Owner' && m.id !== 'self' ? deleteButton('Remove member','remove-member',m.id) : ''}</div></div><p style="margin:12px 0 4px"><span class="tv-badge">${m.access}</span> <span class="tv-badge">${m.role}</span></p>${m.role==='Manager'?`<small>${esc(scopeText(m))}</small>`:''}</div>`).join('')}${state.invites.length?`<h3 class="tv-pending-heading">Pending invitations</h3>${state.invites.map(i=>`<div class="tv-member tv-row"><div><strong>${esc(i.email)}</strong><small>${i.access} · ${i.role} · Pending</small></div><div class="tv-actions">${btn('Resend','resend','listing-action',`data-id="${i.id}"`)}${deleteButton('Revoke invitation','revoke',i.id)}</div></div>`).join('')}`:''}</div>`; }
+  const sectionAction = kind => page === 'settings' || kind === 'structure' ? '' : `<div class="tv-section-toolbar">${addAction(kind)}</div>`;
+  function tree(parent = 'org') { return state.units.filter(u => u.parentId === parent).map(u => `<li><div class="tv-node"><div><strong>${esc(u.name)}</strong><small>${esc(u.type)}</small></div><div class="tv-actions">${nodeActions(u.id)}</div></div><ul>${tree(u.id)}</ul></li>`).join(''); }
+  function structure() { return `${sectionAction('structure')}<div class="tv-card"><div class="tv-row"><div><h2>Organization structure</h2></div></div>${!state.units.length ? `<div class="tv-grid">${[['simple','Simple Team','One team, with room to grow.'],['branches','Teams & Branches','A branch with a team inside.'],['custom','Custom Structure','Build your own hierarchy.']].map(([id,title,desc]) => btn(`<strong>${title}</strong>`,'template','tv-template',`data-id="${id}"`)).join('')}</div>` : ''}<ul class="tv-tree"><li><div class="tv-node"><div><strong>${esc(state.org.name)}</strong></div><div class="tv-actions">${nodeActions('org')}</div></div><ul>${tree()}</ul></li></ul></div>`; }
+  function members(unit = null) { const list = state.members.filter(m=>unit===null || m.unitId===unit), invites=state.invites.filter(i=>unit===null || i.unitId===unit); return `${unit===null?sectionAction('members'):''}<div class="tv-card"><div class="tv-row"><h2>${unit===null?'Members':'Direct members'}</h2>${unit!==null?btn('Add member','add-node-member','listing-action primary',`data-id="${unit}"`):''}</div>${!list.length?'<p class="tv-empty-members">No members in this unit.</p>':''}${list.map(m => `<div class="tv-member"><div class="tv-row"><div class="tv-person"><span class="tv-avatar">${esc(m.name.split(' ').map(w=>w[0]).slice(0,2).join(''))}</span><div><strong>${esc(m.name)}${m.id==='self'?' (you)':''}</strong><small>${esc(m.email)}</small>${m.unitId!=='org'?`<small>${esc(path(m.unitId))}</small>`:''}</div></div><div class="tv-actions">${btn('Edit','edit-member','listing-action',`data-id="${m.id}"`)}${m.access !== 'Owner' && m.id !== 'self' ? deleteButton('Remove member','remove-member',m.id) : ''}</div></div><p style="margin:12px 0 4px"><span class="tv-badge">${m.access}</span> <span class="tv-badge">${m.role}</span></p>${m.role==='Manager'?`<small>${esc(scopeText(m))}</small>`:''}</div>`).join('')}${invites.length?`<h3 class="tv-pending-heading">Pending invitations</h3>${invites.map(i=>`<div class="tv-member tv-row"><div><strong>${esc(i.email)}</strong><small>${i.access} · ${i.role} · Pending</small></div><div class="tv-actions">${btn('Resend','resend','listing-action',`data-id="${i.id}"`)}${deleteButton('Revoke invitation','revoke',i.id)}</div></div>`).join('')}`:''}</div>`; }
   function organizationForm() { return `<form id="tv-org-form" class="tv-card"><h2>${state.org ? 'Organization details' : 'Create your organization'}</h2><label>Organization name<input name="name" required maxlength="80" placeholder="e.g. Prime Estates" value="${esc(state.org?.name || '')}" /></label><div class="tv-grid two"><label>Country / Region<select name="country">${options(['Pakistan','United Arab Emirates','Saudi Arabia','United Kingdom','China','Other'],state.org?.country || 'Pakistan')}</select></label></div>${page === 'settings' ? `<details class="tv-advanced"><summary>Advanced settings</summary><label>Time zone<select name="timezone">${options(Object.values(zones),state.org?.timezone || 'Asia/Karachi')}</select></label></details>` : ''}<div class="tv-footer">${btn('Back','back')}<button class="primary" type="submit">${page === 'settings' ? 'Save details' : state.org ? 'Save & Continue' : 'Create & Continue'}</button></div></form>`; }
   function render(focus = false) {
     let html = '';
     if (!state.org && state.step === 0) html = header('Team','') + `<div class="tv-card tv-empty"><div class="tv-symbol"><i data-lucide="network"></i></div><h1>Build your team in Pislaka</h1>${btn('Set up Organization →','start','primary')}</div>`;
     else if (page === 'home' && state.complete) html = header('Your Team Agent',`A shared view of ${esc(state.org.name)}.`,btn('Organization Settings','settings')) + `<div class="tv-grid"><div class="tv-card"><h3>Organization</h3><p>${esc(state.org.name)}</p></div><div class="tv-card"><h3>Members</h3><div class="tv-stat">${state.members.length}</div></div><div class="tv-card"><h3>Managers</h3><div class="tv-stat">${state.members.filter(m=>m.role==='Manager').length}</div></div></div><div class="tv-card"><span class="tv-kicker">Start a conversation</span><h2 style="margin-top:12px">What needs your team's attention?</h2><div class="tv-grid">${['What are my team priorities today?','Which agents need follow-up support?','How is each branch performing?'].map((q,i)=>btn(q,'question','tv-template',`data-id="${i}"`)).join('')}</div>${answer ? `<div class="tv-note tv-answer" role="status">${esc(answer)}</div>` : ''}</div>`;
-    else if (page === 'settings') html = header('Organization Settings',esc(state.org.name),btn('← Team Agent','home')) + `<div class="tv-settings-toolbar"><nav class="tv-tabs" aria-label="Organization settings">${[['details','Details'],['structure','Structure'],['members','Members']].map(([id,label])=>btn(label,'tab','',`data-id="${id}" ${tab===id?'aria-current="page"':''}`)).join('')}</nav>${tab === 'details' ? '' : addAction(tab)}</div>${tab === 'details' ? organizationForm() : tab === 'structure' ? structure() : members()}`;
+    else if (page === 'settings') html = header('Organization Settings',esc(state.org.name),btn('← Team Agent','home')) + `<div class="tv-settings-toolbar"><nav class="tv-tabs" aria-label="Organization settings">${[['details','Details'],['structure','Structure'],['members','Members']].map(([id,label])=>btn(label,'tab','',`data-id="${id}" ${tab===id?'aria-current="page"':''}`)).join('')}</nav>${tab === 'members' ? addAction(tab) : ''}</div>${tab === 'details' ? organizationForm() : tab === 'structure' ? structure() : members()}`;
     else html = header('Set up your organization','',btn('Save & exit','exit')) + `<ol class="tv-steps">${stepNames.map((s,i)=>`<li class="${state.step===i+1?'current':''}" ${state.step===i+1?'aria-current="step"':''}><span>0${i+1}</span>${s}</li>`).join('')}</ol>${state.step === 1 ? organizationForm() : state.step === 2 ? structure() : members()}${state.step>1 ? `<div class="tv-footer">${btn('← Back','back')}${btn(state.step===3?'Complete setup →':'Continue →','next','primary')}</div>` : ''}`;
     if(state.org) html += `<div class="tv-section-toolbar">${btn('<i data-lucide="rotate-ccw" aria-hidden="true"></i>Reset organization','reset-organization','listing-action')}</div>`;
-    root.innerHTML = html + `<p class="tv-status" role="status">${esc(status)}</p><dialog id="tv-dialog" aria-labelledby="tv-dialog-title"></dialog>`;
+    root.innerHTML = html + `<p class="tv-status" role="status">${esc(status)}</p><dialog id="tv-dialog" aria-labelledby="tv-dialog-title"></dialog><dialog id="tv-member-drawer" class="tv-member-drawer" aria-labelledby="tv-drawer-title"></dialog>`;
     root.querySelector('#tv-org-form')?.addEventListener('submit', e => {
       e.preventDefault(); const f = new FormData(e.target); const name = f.get('name').trim();
       if (!name) { e.target.elements.name.setCustomValidity('Enter an organization name.'); e.target.elements.name.reportValidity(); return; }
@@ -47,6 +52,12 @@
     });
     root.querySelector('[name=country]')?.addEventListener('change',e=>{const zone=root.querySelector('[name=timezone]');if(zone){zone.value=zones[e.target.value];zone.dispatchEvent(new Event('change'));}});
     root.querySelector('[name=name]')?.addEventListener('input',e=>e.target.setCustomValidity(''));
+    if(drawerUnit!==null) {
+      const drawer=root.querySelector('#tv-member-drawer');
+      drawer.innerHTML=`<div class="tv-row"><div><small>${esc(path(drawerUnit))}</small><h2 id="tv-drawer-title">Unit members</h2></div>${btn('Close','close-drawer')}</div>${members(drawerUnit)}`;
+      drawer.addEventListener('cancel',()=>{drawerUnit=null;});
+      drawer.showModal();
+    }
     enhanceSelects(root);
     window.lucide?.createIcons();
     if (focus) { root.querySelector('h1')?.focus(); root.closest('.content').scrollTop=0; }
@@ -111,17 +122,17 @@
     d.showModal();
     enhanceSelects(d);
   }
-  function editUnit(id) {
+  function editUnit(id, parentId = 'org') {
     const u=state.units.find(x=>x.id===id); const descendants=new Set([id]);
     let changed=true; while(changed) { changed=false; state.units.forEach(x=>{if(descendants.has(x.parentId)&&!descendants.has(x.id)){descendants.add(x.id);changed=true;}}); }
-    modal(u?'Edit Organization Unit':'Add Organization Unit',`<label>Unit name<input name="name" maxlength="80" required value="${esc(u?.name || '')}"></label><div class="tv-grid two"><label>Unit type<select name="type">${options(['Team','Branch','Region','Department','Other'],u?.type || 'Team')}</select></label><label>Parent unit<select name="parentId">${[{id:'org',name:state.org.name},...state.units.filter(x=>!descendants.has(x.id)).map(x=>({id:x.id,name:path(x.id)}))].map(x=>`<option value="${x.id}" ${x.id===(u?.parentId || 'org')?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label></div>`, (f,d)=>{
+    modal(u?'Edit Organization Unit':`Add unit under ${esc(parentId==='org'?state.org.name:state.units.find(x=>x.id===parentId).name)}`,`<label>Unit name<input name="name" maxlength="80" required value="${esc(u?.name || '')}"></label><div class="tv-grid two"><label>Unit type<select name="type">${options(['Team','Branch','Region','Department','Other'],u?.type || 'Team')}</select></label>${u?`<label>Parent unit<select name="parentId">${[{id:'org',name:state.org.name},...state.units.filter(x=>!descendants.has(x.id)).map(x=>({id:x.id,name:path(x.id)}))].map(x=>`<option value="${x.id}" ${x.id===(u?.parentId || 'org')?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>`:`<input type="hidden" name="parentId" value="${parentId}">`}</div>`, (f,d)=>{
       if (!f.get('name').trim()) {d.querySelector('#tv-form-error').textContent='Enter a unit name.';return;}
       if(state.units.some(x=>x.id!==id&&x.parentId===f.get('parentId')&&x.name.toLowerCase()===f.get('name').trim().toLowerCase())){d.querySelector('#tv-form-error').textContent='A unit with this name already exists under this parent.';return;}
       const value={id:u?.id || uid(),name:f.get('name').trim(),type:f.get('type'),parentId:f.get('parentId')};
       if(u) Object.assign(u,value);else state.units.push(value);d.close();save();render();flash('Saved');
     });
   }
-  function editMember(id) {
+  function editMember(id, defaultUnit = 'org') {
     const m=state.members.find(x=>x.id===id);
     // Explicit grants stay separate from inherited coverage, including while covered by an ancestor.
     const grants = new Map((m?.scopes || []).map(s=>[s.unitId, {...s}]));
@@ -138,7 +149,7 @@
       return `<ul class="tv-scope-tree">${scopeNodes.filter(u=>u.parentId===parent).map(u=>`<li><div class="tv-scope-row" data-scope-id="${u.id}"><label class="tv-check"><input type="checkbox" name="scope" value="${u.id}" aria-label="${esc(path(u.id))}"><strong>${esc(u.name)}</strong></label><small class="tv-scope-inherited"></small><label class="tv-check tv-scope-include"><input type="checkbox" name="include-${u.id}" aria-label="Include sub-units of ${esc(path(u.id))}">Include sub-units</label></div>${scopeNodes.some(x=>x.parentId===u.id)?scopeTree(u.id):''}</li>`).join('')}</ul>`;
     }
     let matched = null;
-    modal(m?'Edit member':'Add member',`<label>Email<input type="email" name="email" required autocomplete="off" maxlength="254" placeholder="name@example.com" value="${esc(m?.email || '')}" ${m?'readonly':''}></label><div id="tv-account-result" aria-live="polite"></div>${state.units.length?`<details class="tv-advanced" ${m?.unitId!=='org'&&m?'open':''}><summary>Assign to unit</summary><label>Organization Unit<select name="unitId">${unitOptions(m?.unitId || 'org')}</select></label></details>`:'<input type="hidden" name="unitId" value="org">'}<div class="tv-grid two"><label>Organization Access<select name="access">${options(id==='self'?['Owner']:['Admin','Member'],m?.access || 'Member')}</select></label><label>Business Role<select name="role">${options(['Agent','Manager'],m?.role || 'Agent')}</select></label></div><div id="tv-management" ${m?.role==='Manager'?'':'hidden'}><h3>Management Scope</h3><div class="tv-scope">${scopeTree()}</div></div>`, (f,d)=>{
+    modal(m?'Edit member':'Add member',`<label>Email<input type="email" name="email" required autocomplete="off" maxlength="254" placeholder="name@example.com" value="${esc(m?.email || '')}" ${m?'readonly':''}></label><div id="tv-account-result" aria-live="polite"></div>${state.units.length?`<details class="tv-advanced" ${(m && m.unitId!=='org') || defaultUnit!=='org'?'open':''}><summary>Assign to unit</summary><label>Organization Unit<select name="unitId">${unitOptions(m?.unitId || defaultUnit)}</select></label></details>`:'<input type="hidden" name="unitId" value="org">'}<div class="tv-grid two"><label>Organization Access<select name="access">${options(id==='self'?['Owner']:['Admin','Member'],m?.access || 'Member')}</select></label><label>Business Role<select name="role">${options(['Agent','Manager'],m?.role || 'Agent')}</select></label></div><div id="tv-management" ${m?.role==='Manager'?'':'hidden'}><h3>Management Scope</h3><div class="tv-scope">${scopeTree()}</div></div>`, (f,d)=>{
       const role=f.get('role'), selected=[...grants.keys()];
       const email=f.get('email').trim().toLowerCase();
       const error=text=>d.querySelector('#tv-form-error').textContent=text;
@@ -200,6 +211,10 @@
   }
   root.addEventListener('click',e=>{
     const b=e.target.closest('[data-action]'); if(!b)return; const a=b.dataset.action,id=b.dataset.id;
+    if(a==='close-drawer'){drawerUnit=null;root.querySelector('#tv-member-drawer').close();return;}
+    if(a==='unit-members'){drawerUnit=id;render();return;}
+    if(a==='add-child'){editUnit(undefined,id);return;}
+    if(a==='add-node-member'){editMember(undefined,id);return;}
     if(a==='close'){root.querySelector('dialog').close();return;}
     if(a==='add-unit'||a==='edit-unit'){editUnit(id);return;}
     if(a==='add-member'||a==='edit-member'){editMember(id);return;}
@@ -220,7 +235,7 @@
       modal('Reset organization?', '<p>This clears the organization, units, members and pending invitations saved in this browser so you can start again.</p>', (f,d)=>{
         d.close();clearTimeout(toastTimer);
         state={version:1,org:null,units:[],members:[],invites:[],step:0,complete:false};
-        page='setup';tab='structure';answer='';status='';save();render(true);
+        page='setup';tab='structure';drawerUnit=null;answer='';status='';save();render(true);
       });
       const submit=root.querySelector('dialog [type=submit]');submit.textContent='Reset organization';submit.className='listing-action confirm-danger';return;
     }

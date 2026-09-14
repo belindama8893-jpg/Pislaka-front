@@ -115,3 +115,15 @@
 .team-view .tv-scope-include[hidden] { display:none; }
 .tv-scope-tree .is-inherited { color:var(--muted); }
 .tv-scope-tree input:disabled { opacity:.65; }
+.tv-node-menu { position:relative; }
+.tv-node-menu summary { list-style:none; display:grid; place-items:center; width:36px; height:36px; border:1px solid var(--border-color); border-radius:9px; cursor:pointer; font-size:22px; }
+.tv-node-menu summary::-webkit-details-marker { display:none; }
+.tv-node-menu>div { display:flex; gap:8px; padding-top:8px; }
+.tv-node-menu[open] { padding-bottom:4px; }
+.tv-node .tv-actions { flex-wrap:wrap; justify-content:flex-end; }
+.team-view dialog.tv-member-drawer { position:fixed; inset:0 0 0 auto; margin:0; width:min(560px,100%); height:100dvh; max-height:100dvh; border-radius:18px 0 0 18px; padding:28px; }
+.tv-member-drawer>.tv-row { margin-bottom:26px; }
+.tv-member-drawer .tv-card { padding:0; border:0; }
+.tv-member-drawer .tv-person { min-width:0; }
+.tv-empty-members { margin-top:24px!important; }
+@media(max-width:700px) { .tv-node { flex-wrap:wrap; } .tv-node>.tv-actions { width:100%; justify-content:flex-start; } .team-view dialog.tv-member-drawer { padding:22px; } }
