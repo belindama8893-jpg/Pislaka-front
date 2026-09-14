@@ -4477,6 +4477,7 @@
         .listing-management-actions > .listing-action.danger { align-self: flex-start; }
       }
     </style>
+  <link rel="stylesheet" href="./team-v1.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -4490,6 +4491,7 @@
         </div>
 
         <nav class="nav-group" aria-label="Main navigation">
+          <button class="nav-item view-nav" data-view="team"><i data-lucide="network" aria-hidden="true"></i>Team</button>
           <button class="nav-item view-nav active" data-view="home">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>
             New chat
@@ -4544,6 +4546,7 @@
         </header>
 
         <div class="content">
+          <section id="team-view" class="team-view" aria-label="Team workspace" hidden></section>
           <section class="home-view" id="home-view">
             <div class="hero">
               <h1>Meet your AI team</h1>
@@ -5509,7 +5512,7 @@
       }
 
       expertTabs.forEach((tab, index) => {
-        tab.addEventListener("click", () => renderExpert(tab.dataset.expert));
+        tab.addEventListener("click", () => tab.dataset.expert === "team" ? showView("team") : renderExpert(tab.dataset.expert));
         tab.addEventListener("keydown", (event) => {
           if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
           event.preventDefault();
@@ -6320,6 +6323,8 @@
 
       function showView(view) {
         const showFlow = view === "flow";
+        document.getElementById("team-view").hidden = view !== "team";
+        if (view === "team") window.TeamV1?.open();
         const activeNavigationView = showFlow ? "home" : view === "listing-detail" ? "listings" : view === "lead-detail" ? "leads" : view;
         homeView.classList.toggle("hidden", view !== "home");
         flowView.classList.toggle("visible", showFlow);
@@ -6777,5 +6782,6 @@
 
       confirmationEditForm.addEventListener("submit", (event) => event.preventDefault());
     </script>
+  <script src="./team-v1.js"></script>
   </body>
 </html>
