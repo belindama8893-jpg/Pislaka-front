@@ -8,12 +8,12 @@
 
 1. 当前用户沿用 Ayesha Khan；创建组织只填名称和国家，国家默认 Pakistan。系统按国家填默认 IANA 时区，Settings → Details → Advanced settings 可修改时区。多时区国家后续应提供更精确的默认值与完整时区列表。
 2. 创建者为 Owner，拥有 Admin 配置权限，业务角色默认 Agent。无 Team Account 类型。
-3. 结构模板：Simple Team / Teams & Branches / Custom Structure。支持 Team、Branch、Region、Department、Other。树用缩进和连接线展示，不再用节点卡片外框。节点直接提供 Edit / Delete；删除需确认。有子节点、成员或已保存/待邀请的管理范围引用时阻止删除。根组织不能作为单元删除。
+3. 结构模板：Simple Team / Teams & Branches / Custom Structure。支持 Team、Branch、Region、Department、Other。树用缩进和连接线展示，不再用节点卡片外框。节点直接提供 Edit / 红色删除图标；删除需确认。有子节点、成员或已保存/待邀请的管理范围引用时阻止删除。根组织不能作为单元删除。
 4. 添加成员以 Email 识别，输入完整邮箱匹配已有账号，选择匹配结果后 Add member；已有成员阻止重复添加。名字从账号读取。
 5. 不存在的账号显示 Send invitation，保存为 Pending；支持 Resend / Revoke，同邮箱待处理邀请不能重复创建。Pending 不计入正式成员数或 Manager 数。
 6. 访问权限默认 Member，可选 Admin；业务角色默认 Agent，可选 Manager。仅 Manager 展示 Management Scope，至少选一个节点，每节点单独 Include sub-units。
 7. 无子单元时不显示成员归属字段，自动归属组织根；存在子单元时通过收起的 Assign to unit 可选设置。归属与管理范围分别保存。
-8. Review → Complete → Team Agent；Settings 可编辑 Details、Structure、Members、Roles & Access。浏览器刷新保留进度和邀请。
+8. Review → Complete → Team Agent；Settings 可编辑 Details、Structure、Members。浏览器刷新保留进度和邀请。
 9. 页面不出现 Demo、mock、本地保存、权限解释和常驻成功提示；保留错误、删除确认、Pending 状态与短暂成功反馈。重置入口已从产品页面移除；开发调试可清除 localStorage 中的专用键。
 10. 原生 select 已替换为页面内下拉；保留底层表单值，菜单跟随字段宽度，空间不足时向上展开，支持方向键、Home/End、Enter、Escape、Tab 和点击外部关闭。
 
@@ -98,3 +98,11 @@ Organization Access 管“谁能配置组织”；Business Role 管“是否承�
 - Manager 缺少范围阻止提交；无子单元隐藏归属字段，有子单元折叠显示 Assign to unit。
 - 空单元删除确认通过；有子节点的单元删除受阻。
 - 保留已有用户组织，交互测试在 localhost 独立存储中进行；浏览器未出现 error/warn。
+
+## 操作入口统一
+
+- Settings 仅保留 Details / Structure / Members；角色与管理范围在 Members 编辑。
+- 添加单元及添加成员位于卡片外上方右侧，设置页与标签同排；设置向导同样放在卡片上方。
+- 品牌色实底按钮使用白色文字和图标；浅色选中标签保留深色文字。
+- 节点删除、成员移除及邀请撤销沿用 Listings 的红色垃圾桶按钮和悬停提示；危险操作确认使用红底白字。
+- 成员列表提供 Edit / Remove member；移除只删除组织成员关系及管理范围，不删除账号。Owner 不显示移除入口，事件处理也拒绝移除 Owner。

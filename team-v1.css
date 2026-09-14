@@ -87,3 +87,19 @@
 #tv-account-result:not(:empty) { margin-bottom:18px; color:var(--muted); }
 #tv-management { margin-bottom:20px; }
 .team-view select[hidden] { display:none; }
+/* Reuse Listings action styling without the generic Team button overrides. */
+.team-view button.primary { color:#fff; }
+.team-view button.listing-action { min-height:36px; border-radius:9px; padding:0 14px; font-size:12px; font-weight:500; line-height:1; background:var(--content-background); }
+.team-view button.listing-action:hover { background:var(--action-soft-background); }
+.team-view button.listing-action.primary { color:#fff; background:var(--brand); border-color:var(--brand); }
+.team-view button.listing-action.primary:hover { background:var(--action-hover); border-color:var(--action-hover); }
+.team-view button.listing-action.danger { color:#a43b3b; background:var(--content-background); border-color:rgba(164,59,59,.22); }
+.team-view button.listing-action.danger:hover { background:rgba(164,59,59,.06); border-color:rgba(164,59,59,.38); }
+.team-view button.listing-action.icon-only { width:36px; padding:0; }
+.team-view button.confirm-danger { color:#fff; background:#b94a48; border-color:#b94a48; }
+.team-view button.confirm-danger:hover { color:#fff; background:#a63f3d; border-color:#a63f3d; }
+.tv-settings-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px; }
+.tv-settings-toolbar .tv-tabs { margin-bottom:0; }
+.tv-section-toolbar { display:flex; justify-content:flex-end; margin-bottom:18px; }
+.tv-actions { gap:8px; }
+@media(max-width:700px) { .tv-settings-toolbar>.listing-action { margin-left:auto; } }
