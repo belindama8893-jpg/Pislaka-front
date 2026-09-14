@@ -59,3 +59,31 @@
 .tv-card,.tv-node>div,.tv-person>div { min-width:0; overflow-wrap:anywhere; }
 .tv-tree { overflow-x:auto; }
 .tv-node { min-width:180px; }
+/* Team V1 refinement: quiet hierarchy and consistent in-page controls. */
+.team-view .tv-node { border:0; border-radius:0; margin:0; padding:13px 0 13px 10px; }
+.tv-actions { display:flex; align-items:center; gap:18px; flex-shrink:0; }
+.tv-tree { margin-top:24px; }
+.tv-tree ul { margin-left:14px; }
+.team-view .tv-template { min-height:76px; }
+.team-view .tv-template strong { margin:0; }
+.tv-row h2 { margin:0; }
+.tv-card>h2 { margin-bottom:24px; }
+.tv-card>.tv-grid { margin-top:24px; }
+.tv-pending-heading { margin-top:30px!important; }
+.tv-status:empty { display:none; }
+.tv-status { position:fixed; bottom:24px; right:24px; z-index:100; padding:12px 18px; background:var(--content-background); border:1px solid var(--border-color); border-radius:10px; box-shadow:var(--shadow); }
+.tv-empty h1 { margin-bottom:28px; }
+.tv-advanced { margin:0 0 22px; }
+.tv-advanced summary { cursor:pointer; color:var(--muted); margin:12px 0; }
+.tv-select { display:block; width:100%; min-width:0; }
+.team-view .tv-select-trigger { display:flex; width:100%; min-height:46px; padding:12px 14px; justify-content:space-between; align-items:center; text-align:left; font-weight:400; gap:12px; }
+.tv-select-trigger::after { content:''; flex-shrink:0; width:6px; height:6px; border-right:1px solid; border-bottom:1px solid; transform:rotate(45deg) translateY(-2px); }
+.tv-select-menu { position:fixed; z-index:1000; overflow:auto; padding:5px; background:var(--content-background); border:1px solid var(--border-color); border-radius:10px; box-shadow:var(--shadow); }
+.tv-select-menu[hidden] { display:none; }
+.team-view .tv-select-menu button { display:block; width:100%; border:0; text-align:left; font-weight:400; padding:10px 12px; }
+.team-view .tv-select-menu [aria-selected=true],.team-view .tv-account-choice[aria-pressed=true] { background:var(--action-soft-background); }
+.team-view .tv-grid.two { align-items:start; }
+.team-view .tv-account-choice { display:block; width:100%; text-align:left; margin:-8px 0 22px; padding:12px 14px; }
+#tv-account-result:not(:empty) { margin-bottom:18px; color:var(--muted); }
+#tv-management { margin-bottom:20px; }
+.team-view select[hidden] { display:none; }

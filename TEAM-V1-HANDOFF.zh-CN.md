@@ -1,22 +1,27 @@
 # Team V1 Organization Setup · Demo 与技术交接
 
-## 实现与演示
+## 实现与演示（交互精简版）
 
-本次沿用现有静态 HTML、青绿色主色、圆角卡片、浅色/深色主题、移动导航。无构建依赖，无真实后端请求。
+保留现有主题与静态前端，导航顺序为 New chat → Listings → Leads → Team。
 
-启动：在仓库目录运行 `python3 -m http.server 4180`，访问 `http://127.0.0.1:4180/#team`。也可从左侧 Team 或首页 Team 专家按钮进入。
+启动：在仓库目录运行 `python3 -m http.server 4180`，访问 `http://127.0.0.1:4180/#team`。也可从首页 Team 专家按钮进入。
 
-1. 当前登录用户沿用 Demo 的 Ayesha Khan，不引入账号类型或 Team Account。
-2. 点击 Set up Organization；填名称、国家/地区、IANA 时区。
-3. 创建者自动成为 Owner，包含 Admin 配置权限；默认 Business Role 为 Agent，可以在 Members 改为 Manager。
-4. 选择 Simple Team、Teams & Branches 或 Custom Structure。模板仅在空结构出现；已有结构通过 Add Organization Unit 增加。支持 Team / Branch / Region / Department / Other、父节点、重命名及移动父节点；禁止循环。可以不建任何单元，直接把成员放在组织根节点。
-5. 添加 mock 成员，选择归属单元、Business Role、Organization Access。当前 Owner 固定；其他成员可为 Admin 或 Member。Owner 转移不在本次原型范围。
-6. Manager 必须至少选择一个管理范围；每个范围单独设置 Include sub-units。关闭后只包含该节点直接归属的成员。切回 Agent 后清除管理范围。
-7. Review 可返回修改详情、结构和成员；Complete 后进入 Team Agent，展示组织、成员数、Manager 数及三条可点击管理问题。
-8. Organization Settings 可修改 Details、Structure、Members、Roles & Access。表单 Save 后保存，Cancel 不提交。被成员、子节点或管理范围引用的单元不能删除。
-9. 刷新保留数据，未完成设置可 Save & exit 后继续；Reset demo 经确认后只清除此 Team Demo 数据。
+1. 当前用户沿用 Ayesha Khan；创建组织只填名称和国家，国家默认 Pakistan。系统按国家填默认 IANA 时区，Settings → Details → Advanced settings 可修改时区。多时区国家后续应提供更精确的默认值与完整时区列表。
+2. 创建者为 Owner，拥有 Admin 配置权限，业务角色默认 Agent。无 Team Account 类型。
+3. 结构模板：Simple Team / Teams & Branches / Custom Structure。支持 Team、Branch、Region、Department、Other。树用缩进和连接线展示，不再用节点卡片外框。节点直接提供 Edit / Delete；删除需确认。有子节点、成员或已保存/待邀请的管理范围引用时阻止删除。根组织不能作为单元删除。
+4. 添加成员以 Email 识别，输入完整邮箱匹配已有账号，选择匹配结果后 Add member；已有成员阻止重复添加。名字从账号读取。
+5. 不存在的账号显示 Send invitation，保存为 Pending；支持 Resend / Revoke，同邮箱待处理邀请不能重复创建。Pending 不计入正式成员数或 Manager 数。
+6. 访问权限默认 Member，可选 Admin；业务角色默认 Agent，可选 Manager。仅 Manager 展示 Management Scope，至少选一个节点，每节点单独 Include sub-units。
+7. 无子单元时不显示成员归属字段，自动归属组织根；存在子单元时通过收起的 Assign to unit 可选设置。归属与管理范围分别保存。
+8. Review → Complete → Team Agent；Settings 可编辑 Details、Structure、Members、Roles & Access。浏览器刷新保留进度和邀请。
+9. 页面不出现 Demo、mock、本地保存、权限解释和常驻成功提示；保留错误、删除确认、Pending 状态与短暂成功反馈。重置入口已从产品页面移除；开发调试可清除 localStorage 中的专用键。
+10. 原生 select 已替换为页面内下拉；保留底层表单值，菜单跟随字段宽度，空间不足时向上展开，支持方向键、Home/End、Enter、Escape、Tab 和点击外部关闭。
 
-存储：浏览器 localStorage `pislaka.team-v1.v1`。无真实邀请、拖拽、多组织切换、自定义权限、真实业务查询或 MCP。示例回答明确标为演示，组织统计来自当前本地数据，业务表现不虚构为真实结果。网络共享、并发编辑、生产授权均不在 Demo 范围。
+### 演示邮箱与边界
+
+本地账号库包含 `ayesha@pislaka.example`、`sara@pislaka.example`、`ali@pislaka.example`；用 `new.member@example.com` 可演示邀请分支。这些为保留域名下的演示标识，不代表真实账号。旧版成员缺少邮箱时会补充本地占位邮箱，不能迁移为真实账号凭证。
+
+数据保存在浏览器 localStorage `pislaka.team-v1.v1`。不连接真实账号目录、不实际发邮件。邀请接受、过期及真实业务查询尚未实现。点击管理问题只展示当前组织数量或无活动数据状态，不生成虚假的业绩记录。页面采用正常产品文案，技术交接文档明确此边界。
 
 ## 主要文件
 
@@ -36,7 +41,7 @@
 | AuditEvent | id, organization_id, actor_id, action, target_type, target_id, before, after, occurred_at | 记录结构、访问角色、范围等写入；避免敏感字段无节制入日志 |
 | Business ownership / assignment | organization_id, assigned_membership_id, related_listing/lead/deal_id | 业务记录必须具备可用于范围过滤的组织和责任成员关联 |
 
-Demo 使用 `org` 标识根节点，技术实现应映射到明确的组织级范围或空 unit_id；不得把该字符串直接作为生产外键。Demo 把创建者信息嵌入本地状态；生产由登录身份提供。Mock 新成员没有真实 Account，不代表邀请或注册流程已实现。
+Demo 使用 `org` 标识根节点，技术实现应映射到明确的组织级范围或空 unit_id；不得把该字符串直接作为生产外键。Demo 把创建者信息嵌入本地状态；生产由登录身份提供。本地账号目录及邀请记录只用于交互，不代表真实注册或发送。
 
 ## 权限语义与服务端规则
 
@@ -65,7 +70,7 @@ Organization Access 管“谁能配置组织”；Business Role 管“是否承�
 | get_agent_followup_summary | period, unit → 逾期、未跟进、后续动作及来源 | Manager 且按 effective_scope 过滤 |
 | get_unit_performance | period, units, metrics → 同口径对比、空数据说明 | Manager；服务端过滤；明确归属及时间口径 |
 
-如将删除、组织详情修改暴露给 Agent，再增设对应工具，复用 API 规则。邀请与多组织切换暂不列入 V1 必做清单。工具写操作应返回结构化结果与变更摘要，模型不能直接执行 SQL 或自行判断权限。
+如将删除、组织详情修改暴露给 Agent，再增设对应工具，复用 API 规则。多组织切换暂不列入 V1 必做清单。邀请交互已加入原型，生产接口见下节。工具写操作应返回结构化结果与变更摘要，模型不能直接执行 SQL 或自行判断权限。
 
 ## 下一轮需要定稿
 
@@ -75,13 +80,21 @@ Organization Access 管“谁能配置组织”；Business Role 管“是否承�
 - 成员调动后，历史业务按当前归属还是事发时归属统计。
 - 初期规模上限、组织层级上限和真实邀请/离职流程。
 
+## 邮箱与邀请新增数据/接口建议
+
+- Account：增加规范化邮箱键（大小写归一），精确匹配返回最少必要信息。生产端限制查询频率，避免提供可枚举的全站账号列表。
+- OrganizationInvitation：id、organization_id、normalized_email、inviter_membership_id、proposed_access、proposed_business_role、home_unit_id、proposed_scopes、status、sent_at、expires_at、accepted_at、token_hash、version。
+- 状态：Pending / Accepted / Revoked / Expired。待邀请角色和范围不生效，不计入正式成员。接受时校验登录邮箱、组织状态及邀请有效性，并以幂等事务创建 Membership/Scope。
+- 待处理同组织同邮箱邀请唯一；重发需更新发送记录并按约定轮换令牌；撤销使令牌失效。角色与范围应在接受时再次验证，防止发送后的组织调整留下无效引用。
+- 建议 API/MCP：`lookup_account_by_email`、`add_existing_organization_member`、`create_organization_invitation`、`list_organization_invitations`、`resend_organization_invitation`、`revoke_organization_invitation`。邀请接受用应用登录流程/API，通常无需暴露给管理 Agent。
+- 所有成员与邀请写入由服务端检查 Owner/Admin 权限、角色授予上限和组织归属；不能信任前端传入的邮箱匹配结果。
+
 ## 本次验证记录
 
-- JavaScript 语法检查、Git diff 空白检查通过。
-- 真实浏览器：Team 空状态 → 创建 → Teams & Branches → 添加 Manager → 未选范围校验 → 选择分公司/Include sub-units → Review → Complete → 示例问题。
-- Settings：单位重命名后成员路径/范围同步；阻止删除被引用节点；父节点选择排除自身和后代；新增 Department 到第三层；Organization Access 可独立改为 Admin。
-- 刷新恢复已完成组织；Save & exit 后重新进入保留未完成步骤。
-- 不建任何单元、不增加成员的最简路径可以完成，首页显示 1 成员 / 0 Manager。
-- 首页原有 Team 专家入口可以进入新工作区。
-- 桌面与 390×844 手机视口视觉检查通过；窄屏深层树提供横向滚动，页面卡片及按钮可用。
-- 浏览器未出现 error/warn。深色样式复用既有主题变量，未新增主题切换控件；本次未单独进行深色主题视觉验收。
+- JavaScript 语法、Git diff 检查通过。
+- 真实浏览器完整设置流程；创建阶段不展示时区，UAE 默认 Asia/Dubai；Settings 改 Pakistan 后时区更新为 Asia/Karachi。
+- 页面及成员弹窗下拉菜单与输入框对齐；390×844 手机视口检查通过；Escape 关闭菜单且不误关表单。
+- 已有邮箱匹配、选中后添加、重复成员拦截；未知邮箱产生 Pending，刷新保留，重复待邀请拦截、重发和撤销通过。
+- Manager 缺少范围阻止提交；无子单元隐藏归属字段，有子单元折叠显示 Assign to unit。
+- 空单元删除确认通过；有子节点的单元删除受阻。
+- 保留已有用户组织，交互测试在 localhost 独立存储中进行；浏览器未出现 error/warn。
