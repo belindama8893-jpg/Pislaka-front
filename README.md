@@ -29,8 +29,9 @@ This repository contains a front-end prototype. Third-party payments are simulat
 ## Team V1 organization prototype
 
 Open `http://127.0.0.1:4180/#team`, or select **Team** in the navigation / home expert tabs.
-Create an organization, optionally build a unit tree, add mock members and manager scopes, complete setup, then enter Team Agent. Reopen **Organization Settings** to edit the configuration.
 
-Data persists only in this browser. Email matching and Pending invitations use a local account directory; no emails are sent and no backend or MCP calls are made. Test existing accounts with `ali@pislaka.example` or `sara@pislaka.example`, and the invitation flow with `new.member@example.com`. Creation asks for name and country; time zone is under Advanced settings.
+Setup has two steps: organization details, then a linked organization tree and member list. Select a node to filter members, add child units from the node, and add members from the right panel with an explicit unit assignment. Home summary cards open the same workspace; Managers applies a Manager filter.
 
-See [the Team V1 handoff](TEAM-V1-HANDOFF.zh-CN.md) for the walkthrough, data objects, permission semantics and proposed MCP tools.
+Data persists only in this browser. **Reset organization** clears Team data after confirmation. Email matching and Pending invitations use a local directory; no emails, backend or MCP calls are made. Try `ali@pislaka.example` or `sara@pislaka.example` for existing accounts, and `new.member@example.com` for invitations.
+
+See [the Team V1 handoff](TEAM-V1-HANDOFF.zh-CN.md) for the current walkthrough, data objects, authorization model and proposed MCP tools.

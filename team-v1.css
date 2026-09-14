@@ -127,3 +127,47 @@
 .tv-member-drawer .tv-person { min-width:0; }
 .tv-empty-members { margin-top:24px!important; }
 @media(max-width:700px) { .tv-node { flex-wrap:wrap; } .tv-node>.tv-actions { width:100%; justify-content:flex-start; } .team-view dialog.tv-member-drawer { padding:22px; } }
+/* Combined organization and member workspace. */
+.team-view { max-width:1480px; padding-inline:32px; }
+.tv-linked-workspace { display:grid; grid-template-columns:minmax(310px,.8fr) minmax(360px,1.2fr); background:var(--content-background); border:1px solid var(--border-color); border-radius:18px; overflow:hidden; }
+.tv-linked-structure { padding:24px 16px; border-right:1px solid var(--border-color); min-width:0; }
+.tv-linked-structure>h2 { padding-left:8px; font-size:18px; }
+.tv-linked-members { min-width:0; padding:24px; }
+.tv-linked-members header { align-items:center; margin-bottom:24px; }
+.tv-linked-members header h2 { margin-top:6px; }
+.tv-linked-members header>div { min-width:0; overflow-wrap:anywhere; flex:1; }
+.tv-member-filters { display:grid; grid-template-columns:minmax(120px,1.3fr) minmax(110px,1fr) minmax(100px,1fr); gap:12px; }
+.team-view .tv-member-filters label { font-size:12px; margin:0; }
+.team-view .tv-member-filters input { min-height:46px; }
+.tv-filter-summary { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:12px 0 6px; color:var(--muted); font-size:12px; }
+.tv-member-badges { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+.tv-member-unit { margin:10px 0 0; }
+.tv-linked-members .tv-person { min-width:0; flex:1; }
+.tv-linked-members .tv-actions { flex-shrink:0; }
+.tv-results-empty { padding:44px 12px; text-align:center; color:var(--muted); }
+.team-view .tv-summary-card { text-align:left; padding:26px; border-radius:18px; font-weight:400; }
+.team-view .tv-summary-card:hover { border-color:var(--brand); background:var(--action-soft-background); }
+.tv-tree-templates { display:flex; flex-wrap:wrap; gap:6px; margin:16px 8px; }
+.team-view .tv-tree-templates button { font-size:11px; padding:7px; }
+.tv-linked-tree,.tv-linked-tree ul { list-style:none; margin:0; padding:0; }
+.tv-linked-tree { margin-top:24px; overflow-x:auto; padding:0 0 8px; }
+.tv-linked-tree ul { padding-left:20px; }
+.tv-linked-tree ul[hidden] { display:none; }
+.tv-linked-tree li { position:relative; }
+.tv-linked-tree ul>li::before { content:''; position:absolute; left:-8px; top:0; bottom:0; border-left:1px solid color-mix(in srgb,var(--muted) 42%,transparent); }
+.tv-linked-tree ul>li:last-child::before { bottom:auto; height:23px; }
+.tv-linked-tree ul>li::after { content:''; position:absolute; left:-8px; top:23px; width:12px; border-top:1px solid color-mix(in srgb,var(--muted) 42%,transparent); }
+.tv-linked-node { position:relative; display:flex; align-items:center; gap:3px; min-height:46px; width:max-content; min-width:100%; padding:5px 4px; border-radius:8px; }
+.tv-linked-node.is-selected { background:var(--action-soft-background); }
+.team-view .tv-tree-name { padding:5px 2px; background:transparent; border:0; text-align:left; font-size:13px; font-weight:500; max-width:145px; overflow-wrap:anywhere; }
+.team-view .tv-tree-toggle,.team-view .tv-tree-icon { width:24px; height:28px; padding:0; border:0; background:transparent; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+.tv-tree-toggle svg,.tv-tree-icon svg { width:14px; height:14px; }
+.tv-tree-spacer { width:24px; flex-shrink:0; }
+.tv-tree-count { display:inline-flex; gap:3px; align-items:center; color:var(--muted); font-size:11px; margin-left:3px; white-space:nowrap; }
+.tv-tree-count svg { width:13px; height:13px; }
+.tv-tree-tools { display:inline-flex; gap:1px; margin-left:5px; flex-shrink:0; }
+.team-view .tv-tree-danger { color:#a43b3b; }
+@media(hover:hover) and (pointer:fine) { .tv-tree-tools { opacity:0; pointer-events:none; } .tv-linked-node:hover .tv-tree-tools,.tv-linked-node:focus-within .tv-tree-tools { opacity:1; pointer-events:auto; } }
+@media(max-width:1050px) { .tv-linked-workspace { grid-template-columns:minmax(280px,.8fr) minmax(310px,1fr); } .tv-member-filters { grid-template-columns:1fr 1fr; } .tv-member-search { grid-column:1/-1; } .tv-linked-members { padding:20px; } }
+@media(max-width:850px) { .tv-linked-workspace { grid-template-columns:1fr; } .tv-linked-structure { border-right:0; border-bottom:1px solid var(--border-color); max-height:340px; overflow:auto; } .tv-linked-node { min-width:0; } }
+@media(max-width:700px) { .team-view { padding-inline:18px; } .tv-linked-members { padding:18px; } .tv-linked-structure { padding:18px 10px; } .team-view .tv-tree-name { max-width:135px; } .tv-tree-tools { opacity:1; pointer-events:auto; } }

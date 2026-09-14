@@ -1,128 +1,126 @@
-# Team V1 Organization Setup · Demo 与技术交接
+# Team V1 · 组织与成员联动原型
 
-## 实现与演示（交互精简版）
+## 运行与演示
 
-保留现有主题与静态前端，导航顺序为 New chat → Listings → Leads → Team。
+在仓库运行 `python3 -m http.server 4180`，访问 `http://127.0.0.1:4180/#team`。左侧导航顺序为 New chat → Listings → Leads → Team，首页 Team 专家入口也进入此工作区。
 
-启动：在仓库目录运行 `python3 -m http.server 4180`，访问 `http://127.0.0.1:4180/#team`。也可从首页 Team 专家按钮进入。
+首次设置：**Organization details → Organization & Members → Complete setup**。
 
-1. 当前用户沿用 Ayesha Khan；创建组织只填名称和国家，国家默认 Pakistan。系统按国家填默认 IANA 时区，Settings → Details → Advanced settings 可修改时区。多时区国家后续应提供更精确的默认值与完整时区列表。
-2. 创建者为 Owner，拥有 Admin 配置权限，业务角色默认 Agent。无 Team Account 类型。
-3. 结构模板：Simple Team / Teams & Branches / Custom Structure。支持 Team、Branch、Region、Department、Other。树用缩进和连接线展示，不再用节点卡片外框。节点提供添加子单元、直接成员数与更多菜单；Edit / 删除在更多菜单内；删除需确认。有子节点、成员或已保存/待邀请的管理范围引用时阻止删除。根组织不能作为单元删除。
-4. 添加成员以 Email 识别，输入完整邮箱匹配已有账号，选择匹配结果后 Add member；已有成员阻止重复添加。名字从账号读取。
-5. 不存在的账号显示 Send invitation，保存为 Pending；支持 Resend / Revoke，同邮箱待处理邀请不能重复创建。Pending 不计入正式成员数或 Manager 数。
-6. 访问权限默认 Member，可选 Admin；业务角色默认 Agent，可选 Manager。仅 Manager 展示 Management Scope，至少选一个节点，每节点单独 Include sub-units。
-7. 无子单元时不显示成员归属字段，自动归属组织根；存在子单元时通过收起的 Assign to unit 可选设置。归属与管理范围分别保存。
-8. Members → Complete setup → Team Agent；Settings 可编辑 Details、Structure、Members。浏览器刷新保留进度和邀请。
-9. 页面不出现 Demo、mock、本地保存、权限解释和常驻成功提示；保留错误、删除确认、Pending 状态与短暂成功反馈。为方便反复演示，有组织时在 Team 页面底部提供 Reset organization；确认后仅清除本浏览器的组织、单元、成员、邀请和设置进度，返回创建起点。
-10. 原生 select 已替换为页面内下拉；保留底层表单值，菜单跟随字段宽度，空间不足时向上展开，支持方向键、Home/End、Enter、Escape、Tab 和点击外部关闭。
+- 创建组织填写名称、国家；默认 Pakistan，自动设置默认时区。时区在 Settings → Details → Advanced settings 修改。多时区国家的完整处理留给生产版本。
+- 创建者自动成为 Owner，拥有 Admin 配置能力，业务角色默认 Agent。无需 Team Account 或更换账号。
+- 设置进度、本地组织、成员和 Pending 邀请保留在 localStorage。旧版 Structure / Members / Review 草稿统一恢复到第二步；已完成组织不受影响。
+- 只有创建者、没有下级单元或仍有 Pending 邀请也可完成。完成时校验 Owner、成员归属和 Manager 范围。
+- 页面底部 Reset organization 经过确认后只清除 Team 的本地组织数据，回到空状态，便于反复演示。
 
-### 演示邮箱与边界
+## 最终页面与交互
 
-本地账号库包含 `ayesha@pislaka.example`、`sara@pislaka.example`、`ali@pislaka.example`；用 `new.member@example.com` 可演示邀请分支。这些为保留域名下的演示标识，不代表真实账号。旧版成员缺少邮箱时会补充本地占位邮箱，不能迁移为真实账号凭证。
+### 统一组织与成员管理页
 
-数据保存在浏览器 localStorage `pislaka.team-v1.v1`。不连接真实账号目录、不实际发邮件。邀请接受、过期及真实业务查询尚未实现。点击管理问题只展示当前组织数量或无活动数据状态，不生成虚假的业绩记录。页面采用正常产品文案，技术交接文档明确此边界。
+Settings 只保留 **Details / Organization & Members**。不再保留独立 Structure、Members 页面或成员侧栏。第二步设置也复用同一个联动工作区。
 
-## 主要文件
+桌面左侧组织树，右侧成员列表；窄屏上下排列，组织树在上。节点选择、展开状态、列表筛选为当前视图状态，不写入业务权限。
 
-- `index.html`：左侧 Team 入口、首页 Team 专家入口、现有 showView 导航对接。
-- `team-v1.css`：独立作用域样式，复用现有颜色变量和字体，支持窄屏及深色主题。
-- `team-v1.js`：组织状态、设置步骤、树编辑、成员/范围编辑、Review、首页、Settings、本地保存与重置。
+### 左侧组织树
 
-## 技术底层对象（建议，待产品确认）
+- 根节点与子单元用缩进、横向短线和纵向连接线展示层级，末尾分支连线终止。
+- 点击名称选中节点并更新右侧。名称旁的成员图标与人数常显，表示直接正式成员数，不包含后代或 Pending 邀请。
+- 名称旁提供 ＋、编辑、删除；桌面悬停或键盘聚焦整行时显示，触屏常显。不再使用更多菜单。
+- 有子单元的节点提供展开/收起箭头；叶节点保持对齐。默认展开，新增或移动单元后自动展开对应父级及祖先。
+- 从节点添加子单元自动设置父级，只填名称和类型。类型支持 Team / Branch / Region / Department / Other。
+- 编辑单元可调整父级，排除自身和后代，避免循环。删除需要确认；仍被子单元、成员或已保存/待邀请范围引用时拒绝删除。根组织不能作为单元删除。
+- 空结构保留 Simple Team / Teams & Branches / Custom Structure 快捷模板。
 
-| 对象 | 主要字段 | 关键约束 |
-| --- | --- | --- |
-| Account | id, display_name, identity_reference | 全局用户身份；无 Team Account 类型 |
-| Organization | id, name, country_code, timezone, owner_account_id, setup_status, version | 创建事务同时产生 Owner Membership；IANA 时区；Owner 必须是有效成员 |
-| OrganizationUnit | id, organization_id, parent_id, name, type, status, version | 父节点同组织；无环；根用空 parent；建议同父节点名称唯一 |
-| OrganizationMembership | id, organization_id, account_id, home_unit_id, organization_access, business_role, status | 同组织同账号唯一；归属组织根可用空 home_unit_id；access=Owner/Admin/Member；role=Manager/Agent |
-| ManagementScope | id, membership_id, unit_id, include_sub_units | 仅 Manager；可多选；根范围单独编码；同一成员同一节点唯一；重叠范围取并集并去重 |
-| AuditEvent | id, organization_id, actor_id, action, target_type, target_id, before, after, occurred_at | 记录结构、访问角色、范围等写入；避免敏感字段无节制入日志 |
-| Business ownership / assignment | organization_id, assigned_membership_id, related_listing/lead/deal_id | 业务记录必须具备可用于范围过滤的组织和责任成员关联 |
+### 右侧成员列表及筛选
 
-Demo 使用 `org` 标识根节点，技术实现应映射到明确的组织级范围或空 unit_id；不得把该字符串直接作为生产外键。Demo 把创建者信息嵌入本地状态；生产由登录身份提供。本地账号目录及邀请记录只用于交互，不代表真实注册或发送。
+- 根组织默认开启 Include sub-units，查看全部成员；选择非根节点默认只看直接成员，可开启 Include sub-units 查看后代。
+- 筛选：姓名/邮箱搜索、Business Role（All / Agent / Manager）、Status（All / Active / Pending）。多个条件取交集。
+- 节点切换保留搜索、角色、状态条件，重新设置该节点的 Include sub-units 默认值。结果数量包含当前匹配的正式成员与 Pending 邀请；两者分区显示。
+- Include sub-units 在列表中仅控制查看范围，不会修改任何人的 Management Scope。
+- Add member 只在右侧成员区域。Email 下方常驻 Organization Unit，默认当前选中节点，可修改；无子单元时仍明确显示组织根。
+- 输入完整邮箱，匹配已有账号后选中并 Add member；未知邮箱显示 Send invitation。已有成员和 Pending 邀请阻止重复创建。
+- 编辑成员可调整归属、组织访问角色、业务角色和管理范围。成员调动后，左侧直接人数与右侧筛选结果立即同步。
+- 移除成员需要确认，只移出组织，不删除账号；Owner 不提供移除入口且事件处理拒绝移除 Owner。
+- Pending 邀请支持 Resend / Revoke；不计入首页正式成员或 Manager 数量。
 
-## 权限语义与服务端规则
+### 首页卡片
 
-Organization Access 管“谁能配置组织”；Business Role 管“是否承担业务管理”；Management Scope 管“能看哪些业务”。Owner 包含 Admin 配置能力，不需要同时存储两条互相可能冲突的角色值。Admin 本身不自动授予全组织业务访问。
+Organization、Members、Managers 卡片均可点击。前两者进入联动页并选择根组织、查看全部成员；Managers 自动筛选 Business Role=Manager、Status=Active。Organization Settings 也进入联动页。Details 单独编辑组织基础信息。
 
-服务端统一计算用户上下文，所有 API/MCP 调用都使用已认证主体，验证组织成员关系、访问权限、业务范围。不能信任前端传入的组织 ID、actor ID 或范围。Agent 的个人业务权限沿用现有规则；Manager 的范围由服务端按组织树计算，Include sub-units 应涵盖未来新增后代节点。成员调整归属、组织树移动会影响有效范围，需要可审计、可预览。
+### 视觉与表单
 
-组织创建与 Owner 初始化应为原子事务；关键写入支持版本校验和幂等，防止重复创建或覆盖他人修改。删除有引用的单元需拒绝或提供明确迁移步骤。最后一个 Owner 不可被删除或降级。原型不包含生产 Owner 转移流程。
+复用网站品牌色、浅色/深色主题变量和 Listings 按钮风格；品牌色实底按钮为白字，危险操作确认按钮为红底白字。组织操作保持轻量，不添加说明性横幅。
 
-## 建议 MCP 清单（本次未实现）
+下拉使用页面内组件，紧贴字段、同宽、底部不足时向上展开，支持方向键、Home/End、Enter、Escape、Tab 和点击外部关闭。删除图标带可访问名称，节点支持键盘聚焦与折叠按钮的 aria-expanded 状态。
 
-页面设置可以调用普通应用 API，共享同一套领域服务；不要求为了页面先建设 MCP。下表是后续让 Agent 使用这些能力时的候选工具，名字是建议契约。
+## 权限模型与继承
 
-| 工具 | 输入 / 输出重点 | 权限及目的 |
-| --- | --- | --- |
-| get_organization_context | 当前主体 → organization, membership, access, business_role, effective_scope, setup_status | 所有 Team 对话开始时建立服务端可信上下文 |
-| get_organization_structure | organization → 可见单元树、版本 | 读取配置与可见范围；不得泄露无权结构 |
-| list_organization_members | unit/filter/page → 成员、角色、分页 | 配置者用于组织管理；业务用途仅返回授权范围和必要字段 |
-| preview_management_scope | membership, proposed scopes → 有效单元/人数、影响摘要 | 配置者写入前预览；服务端计算，避免越权和意外扩权 |
-| create_organization | name, country, timezone, idempotency_key → organization + Owner membership | 普通登录用户可创建；事务初始化 |
-| upsert_organization_unit | organization, unit, parent, type, version → 更新结果 | Owner/Admin；同组织、无环、版本约束 |
-| update_organization_member | membership, home_unit, access, role, version → 更新结果 | Owner/Admin，具体可授予角色上限需定稿 |
-| set_management_scope | membership, scopes, version → 范围及影响 | Owner/Admin；Manager 才可有范围；审计 |
-| complete_organization_setup | organization, version → 状态 | 校验 Owner、引用和 Manager 范围 |
-| get_team_priorities | period, filters → 事项、负责人、来源记录、统计口径 | Manager 且按 effective_scope 过滤 |
-| get_agent_followup_summary | period, unit → 逾期、未跟进、后续动作及来源 | Manager 且按 effective_scope 过滤 |
-| get_unit_performance | period, units, metrics → 同口径对比、空数据说明 | Manager；服务端过滤；明确归属及时间口径 |
+三个维度独立保存：
 
-如将删除、组织详情修改暴露给 Agent，再增设对应工具，复用 API 规则。多组织切换暂不列入 V1 必做清单。邀请交互已加入原型，生产接口见下节。工具写操作应返回结构化结果与变更摘要，模型不能直接执行 SQL 或自行判断权限。
+| 维度 | 含义 |
+| --- | --- |
+| Organization Access | Owner / Admin / Member；谁能配置组织及成员 |
+| Business Role | Manager / Agent；业务职责 |
+| Management Scope | 哪些单元的业务可被 Manager 管理 |
 
-## 下一轮需要定稿
+成员归属单元只表示属于哪里，不自动授予对应管理范围。Admin 不自动获得全组织业务访问能力。Owner 包含 Admin 配置能力，不需要并列保存两条冲突角色。
 
-- Admin 是否可授予其他成员 Admin，Owner 专属操作的边界。
-- Manager 是否可兼具个人经纪业务能力；本原型按用户给定的单选 Manager/Agent 实现。
-- 团队管理正式版本是否仅 Manager 可进入业务查询；原型 Owner 的首页为可演示入口，所有示例回答均不访问业务数据。
-- 成员调动后，历史业务按当前归属还是事发时归属统计。
-- 初期规模上限、组织层级上限和真实邀请/离职流程。
+Manager 必须有至少一个范围。范围按组织树选择：选择节点仅覆盖直接归属业务；Include sub-units 覆盖所有后代，包括未来新增单元。下级显示继承选中及来源，不能直接取消；取消上级覆盖后，原有独立授权保留，纯继承勾选消失。跨分支可多选。独立授权与计算覆盖分开，继承结果不逐节点写入 Scope。切换 Agent 保存后清除管理范围。V1 不提供排除子节点等复杂例外规则。
 
-## 邮箱与邀请新增数据/接口建议
+## 数据对象建议
 
-- Account：增加规范化邮箱键（大小写归一），精确匹配返回最少必要信息。生产端限制查询频率，避免提供可枚举的全站账号列表。
-- OrganizationInvitation：id、organization_id、normalized_email、inviter_membership_id、proposed_access、proposed_business_role、home_unit_id、proposed_scopes、status、sent_at、expires_at、accepted_at、token_hash、version。
-- 状态：Pending / Accepted / Revoked / Expired。待邀请角色和范围不生效，不计入正式成员。接受时校验登录邮箱、组织状态及邀请有效性，并以幂等事务创建 Membership/Scope。
-- 待处理同组织同邮箱邀请唯一；重发需更新发送记录并按约定轮换令牌；撤销使令牌失效。角色与范围应在接受时再次验证，防止发送后的组织调整留下无效引用。
-- 建议 API/MCP：`lookup_account_by_email`、`add_existing_organization_member`、`create_organization_invitation`、`list_organization_invitations`、`resend_organization_invitation`、`revoke_organization_invitation`。邀请接受用应用登录流程/API，通常无需暴露给管理 Agent。
-- 所有成员与邀请写入由服务端检查 Owner/Admin 权限、角色授予上限和组织归属；不能信任前端传入的邮箱匹配结果。
+| 对象 | 主要字段与约束 |
+| --- | --- |
+| Account | id, display_name, normalized_email；全局身份、邮箱精确匹配 |
+| Organization | id, name, country_code, timezone, owner_account_id, setup_status, version |
+| OrganizationUnit | id, organization_id, parent_id, name, type, status, version；同组织父级、无环、建议同父级名称唯一 |
+| OrganizationMembership | id, organization_id, account_id, home_unit_id, organization_access, business_role, status；同组织同账号唯一 |
+| ManagementScope | id, membership_id, unit_id, include_sub_units；仅 Manager，多条范围取并集；保留独立授权 |
+| OrganizationInvitation | id, organization_id, normalized_email, inviter_id, proposed_access, proposed_role, home_unit_id, proposed_scopes, status, sent_at, expires_at, accepted_at, token_hash, version |
+| AuditEvent | actor, organization, action, target, before, after, occurred_at；组织与权限变更可审计 |
+| Business assignment | organization_id, assigned_membership_id, related_listing/lead/deal_id；业务范围查询依据 |
 
-## 本次验证记录
+Demo 用 `org` 表示根，生产应映射明确的组织级范围或空 unit_id，不直接拿字符串当外键。创建 Organization 与 Owner Membership 是原子事务。最后一个 Owner 不能删除/降级；Owner 转移不在原型范围。
+
+邀请状态建议 Pending / Accepted / Revoked / Expired。同组织同邮箱待处理邀请唯一；重发记录发送时间并约定令牌轮换；撤销使令牌失效；接受时核验登录邮箱、有效期、角色和范围，并幂等创建 Membership / Scope。Pending 的角色与范围不生效。
+
+## API / MCP 候选清单
+
+页面可以直接调用应用 API，未来 MCP 与 API 复用领域服务，不必先为页面搭 MCP。
+
+| 工具 | 用途 |
+| --- | --- |
+| get_organization_context | 当前登录主体对应的组织、成员身份、业务角色、有效范围、设置状态 |
+| get_organization_structure | 可见组织树、直接成员数与版本 |
+| list_organization_members | 节点、包含后代、搜索、角色、状态、分页；按授权返回结果 |
+| lookup_account_by_email | 精确邮箱匹配，返回最少必要信息，限频防止全站枚举 |
+| create_organization | 创建组织与 Owner，支持幂等 |
+| upsert_organization_unit / delete_organization_unit | 单元新增、编辑、删除，校验父级、循环、引用、版本 |
+| add_existing_organization_member | 已有账号加入组织，校验重复及权限上限 |
+| update_organization_member / remove_organization_member | 调整归属、角色，移除组织关系；Owner 保护 |
+| preview_management_scope / set_management_scope | 服务端计算范围与变更影响，保存独立授权 |
+| create/list/resend/revoke_organization_invitation | 邀请生命周期管理；接受走应用登录/API 流程 |
+| complete_organization_setup | 校验必要配置并完成设置 |
+| get_team_priorities | 授权范围内的团队优先事项及来源 |
+| get_agent_followup_summary | 授权范围内跟进情况与来源 |
+| get_unit_performance | 同周期、同口径的授权单元业绩对比 |
+
+服务端从已认证主体计算上下文，所有读写均校验组织成员关系、配置权限或业务范围；不信任前端组织 ID、邮箱匹配结果、actor、Scope。列表筛选不是安全边界。写入使用版本校验、幂等和审计。业务统计需定稿“成员调动后的历史业务归属口径”。Admin 可授予的角色上限也需定稿。
+
+## 演示数据与实现边界
+
+静态 HTML/CSS/JS，无构建依赖。本地键 `pislaka.team-v1.v1`。不连接真实账号目录，不实际发邮件，不访问真实业务数据或 MCP。
+
+已有账号示例：`ayesha@pislaka.example`、`sara@pislaka.example`、`ali@pislaka.example`；未知邮箱如 `new.member@example.com` 演示邀请。旧版缺少邮箱的成员使用占位邮箱，不能据此迁移真实账号。邀请接受及过期不在此 Demo 中实现。管理问题只显示当前组织数量或无活动数据，避免伪造业务表现。
+
+主要文件：`index.html` 导航整合；`team-v1.js` 状态、树、筛选、表单与本地存储；`team-v1.css` 独立界面样式。
+
+## 本轮验证
 
 - JavaScript 语法、Git diff 检查通过。
-- 真实浏览器完整设置流程；创建阶段不展示时区，UAE 默认 Asia/Dubai；Settings 改 Pakistan 后时区更新为 Asia/Karachi。
-- 页面及成员弹窗下拉菜单与输入框对齐；390×844 手机视口检查通过；Escape 关闭菜单且不误关表单。
-- 已有邮箱匹配、选中后添加、重复成员拦截；未知邮箱产生 Pending，刷新保留，重复待邀请拦截、重发和撤销通过。
-- Manager 缺少范围阻止提交；无子单元隐藏归属字段，有子单元折叠显示 Assign to unit。
-- 空单元删除确认通过；有子节点的单元删除受阻。
-- 保留已有用户组织，交互测试在 localhost 独立存储中进行；浏览器未出现 error/warn。
-
-## 操作入口统一
-
-- Settings 仅保留 Details / Structure / Members；角色与管理范围在 Members 编辑。
-- 全组织 Members 的添加入口位于卡片上方；Structure 改为从节点添加子单元，全局添加单元按钮已移除。
-- 品牌色实底按钮使用白色文字和图标；浅色选中标签保留深色文字。
-- 节点删除、成员移除及邀请撤销沿用 Listings 的红色垃圾桶按钮和悬停提示；危险操作确认使用红底白字。
-- 成员列表提供 Edit / Remove member；移除只删除组织成员关系及管理范围，不删除账号。Owner 不显示移除入口，事件处理也拒绝移除 Owner。
-
-设置流程仅为 Organization → Structure → Members。Members 点击 Complete setup 校验后直接进入首页；允许只有创建者和待接受邀请。旧版停在 Review 的未完成进度恢复到 Members，已完成组织不受影响。
-
-## Management Scope 组织树交互
-
-- 以组织层级展示，支持根节点或多个中间节点独立授权。
-- 选择节点只覆盖该节点直接归属业务；Include sub-units 动态覆盖所有后代，包括之后新增的单元。
-- 继承节点显示选中、不可取消，并标注 Inherited from。取消上级覆盖后，独立授权恢复，纯继承节点取消选中。
-- 独立授权与计算出的覆盖分开保存；被上级暂时覆盖的独立授权仍保留，避免取消上级范围时丢失原授权。继承节点不额外写入 Scope 记录。
-- 组织身份、业务角色、归属单元不随范围勾选改变。切换 Agent 保存仍清除全部管理范围。
-- 浏览器验证：上级覆盖/取消、独立下级保留、保存重开、跨分支选择、新增单元动态继承通过。使用独立测试组织，未更改用户当前权限。
-
-## 节点操作与成员侧栏
-
-- 根节点及各单元都提供 ＋ 添加子单元；弹窗明确当前父级，只填名称与类型。编辑已有单元仍可调整父级，无环及引用保护保持。
-- 节点 Members · N 统计直接正式成员，不含后代或 Pending 邀请。点击打开侧栏，查看该单元直接成员及待邀请记录。
-- 从侧栏添加成员自动带入该单元；保存后更新侧栏和树上的人数。既有成员编辑可调整归属、角色与范围，调出后立即从当前单元列表消失。
-- 节点归属不自动授予管理权限，默认 Member / Agent；管理范围继续独立配置。
-- 更多菜单收纳 Edit unit / Delete；保持 Listings 的操作按钮风格。
-- 验证：节点自动父级、侧栏自动归属、成员调动后的两个节点人数更新、空单元侧栏、更多菜单编辑、手机树布局通过。浏览器无 error/warn，使用 localhost 独立测试数据。
+- 首页三个卡片跳转、Managers 的预置筛选、根组织与直接节点成员筛选。
+- 搜索、键盘清空搜索、Active/Pending、角色筛选及空结果状态。
+- 从当前节点添加邀请时归属常驻且自动带入；成员调动更新结果与节点人数。
+- 子级筛选、折叠隐藏后代、新增子级自动展开父级；键盘可聚焦隐藏的节点操作。
+- 桌面左右布局、390×844 窄屏上下布局及清晰树形连接线。
+- 两步设置，无单元、只有创建者及 Pending 邀请均可完成，刷新后保持完成。
+- 浏览器无 error/warn；使用 localhost 独立测试组织，保留用户 127.0.0.1 当前组织数据。
