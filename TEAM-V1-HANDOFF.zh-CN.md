@@ -32,12 +32,10 @@ Settings 只保留 **Details / Organization & Members**。不再保留独立 Str
 
 ### 右侧成员列表及筛选
 
-- 根组织默认开启 Include sub-units，查看全部成员；选择非根节点默认只看直接成员，可开启 Include sub-units 查看后代。
-- 筛选：姓名/邮箱搜索、Business Role（All / Agent / Manager）、Status（All / Active / Pending）。多个条件取交集。
-- 节点切换保留搜索、角色、状态条件，重新设置该节点的 Include sub-units 默认值。结果数量包含当前匹配的正式成员与 Pending 邀请；两者分区显示。
-- Include sub-units 在列表中仅控制查看范围，不会修改任何人的 Management Scope。
-- Add member 只在右侧成员区域。Email 下方常驻 Organization Unit，默认当前选中节点，可修改；无子单元时仍明确显示组织根。
-- 输入完整邮箱，匹配已有账号后选中并 Add member；未知邮箱显示 Send invitation。已有成员和 Pending 邀请阻止重复创建。
+- 根组织显示全部成员；非根节点只显示直属成员。移除列表 Include sub-units、结果数量和顶部路径。
+- 紧凑搜索配合 Business Role（All / Agent / Manager）、Status（All / Active / Pending）文字按钮，条件取交集，切换节点保留筛选。
+- Display name 为可选组织内备注姓名，存于成员关系或邀请，保留账号 name；搜索覆盖备注、账号姓名和邮箱。
+- 成员行精简显示姓名/邮箱、业务角色、Owner/Admin、待接受状态及操作。根组织视图附简短归属名称，管理范围在编辑器查看。
 - 编辑成员可调整归属、组织访问角色、业务角色和管理范围。成员调动后，左侧直接人数与右侧筛选结果立即同步。
 - 移除成员需要确认，只移出组织，不删除账号；Owner 不提供移除入口且事件处理拒绝移除 Owner。
 - Pending 邀请支持 Resend / Revoke；不计入首页正式成员或 Manager 数量。
@@ -72,7 +70,7 @@ Manager 必须有至少一个范围。范围按组织树选择：选择节点仅
 | --- | --- |
 | Account | id, display_name, normalized_email；全局身份、邮箱精确匹配 |
 | Organization | id, name, country_code, timezone, owner_account_id, setup_status, version |
-| OrganizationUnit | id, organization_id, parent_id, name, type, status, version；同组织父级、无环、建议同父级名称唯一 |
+| OrganizationUnit | id, organization_id, parent_id, name, type（可空）, status, version；同组织父级、无环、建议同父级名称唯一 |
 | OrganizationMembership | id, organization_id, account_id, home_unit_id, organization_access, business_role, status；同组织同账号唯一 |
 | ManagementScope | id, membership_id, unit_id, include_sub_units；仅 Manager，多条范围取并集；保留独立授权 |
 | OrganizationInvitation | id, organization_id, normalized_email, inviter_id, proposed_access, proposed_role, home_unit_id, proposed_scopes, status, sent_at, expires_at, accepted_at, token_hash, version |
@@ -124,3 +122,5 @@ Demo 用 `org` 表示根，生产应映射明确的组织级范围或空 unit_id
 - 桌面左右布局、390×844 窄屏上下布局及清晰树形连接线。
 - 两步设置，无单元、只有创建者及 Pending 邀请均可完成，刷新后保持完成。
 - 浏览器无 error/warn；使用 localhost 独立测试组织，保留用户 127.0.0.1 当前组织数据。
+
+本轮界面调整：两栏等高并独立滚动；手机端上下排列。Unit name 必填，Unit type 选填默认空，树中仅展示节点名称。备注字段 `displayName` 需在正式成员关系和邀请对象中分别保留。
