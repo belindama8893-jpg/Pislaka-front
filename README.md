@@ -29,7 +29,7 @@ This repository contains a front-end prototype. Third-party payments are simulat
 ## Team V1 organization prototype
 
 Open `http://127.0.0.1:4180/#team`, or select **Team** in the navigation / home expert tabs.
-Create an organization, optionally build a unit tree, add mock members and manager scopes, review, then enter Team Agent. Reopen **Organization Settings** to edit the configuration.
+Create an organization, optionally build a unit tree, add mock members and manager scopes, complete setup, then enter Team Agent. Reopen **Organization Settings** to edit the configuration.
 
 Data persists only in this browser. Email matching and Pending invitations use a local account directory; no emails are sent and no backend or MCP calls are made. Test existing accounts with `ali@pislaka.example` or `sara@pislaka.example`, and the invitation flow with `new.member@example.com`. Creation asks for name and country; time zone is under Advanced settings.
 
