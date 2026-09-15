@@ -25,15 +25,33 @@
     }
     expire(s);return s;
   }
-  function expire(s){s.invites.forEach(i=>{if(i.status==='pending'&&Date.parse(i.expiresAt)<=Date.now())i.status='expired';});}
+  // Independent simulated organizations; an account still has only one active membership.
+  const workspaces=s=>[...(s.otherWorkspaces||[]),...(s.org?[{org:s.org,units:s.units,members:s.members,invites:s.invites,step:s.step,complete:s.complete}]:[])];
+  const activeMembership=(s,a=s.currentAccountId)=>workspaces(s).flatMap(w=>w.members).find(m=>m.accountId===a);
+  function selectWorkspace(s,organizationId){
+    if(s.org?.id===organizationId)return;
+    const all=workspaces(s),next=all.find(w=>w.org.id===organizationId);
+    if(!next)throw Error('Organization unavailable.');
+    s.otherWorkspaces=all.filter(w=>w.org.id!==organizationId);Object.assign(s,next);
+  }
+  function beginOrganization(s){
+    if(activeMembership(s)||s.grants.some(g=>g.accountId===s.currentAccountId&&g.active))throw Error('Leave your current organization before creating another.');
+    s.otherWorkspaces=workspaces(s);Object.assign(s,{org:null,units:[],members:[],invites:[],step:1,complete:false});
+  }
+  function selectAccountWorkspace(s){
+    const all=workspaces(s),account=s.accounts.find(a=>a.id===s.currentAccountId);
+    const next=all.find(w=>w.members.some(m=>m.accountId===s.currentAccountId))||all.find(w=>w.invites.some(i=>i.email.toLowerCase()===account?.email.toLowerCase()&&i.status==='pending'))||all.find(w=>w.invites.some(i=>i.email.toLowerCase()===account?.email.toLowerCase()));
+    if(next)selectWorkspace(s,next.org.id);
+  }
+  function expire(s){[...s.invites,...(s.otherWorkspaces||[]).flatMap(w=>w.invites)].forEach(i=>{if(i.status==='pending'&&Date.parse(i.expiresAt)<=Date.now())i.status='expired';});}
   const member=(s,a=s.currentAccountId)=>s.members.find(m=>m.accountId===a);
   const canConfigure=s=>['Owner','Admin'].includes(member(s)?.access);
   const grant=(s,m)=>s.grants.find(g=>g.memberId===m?.id&&g.accountId===m?.accountId&&g.organizationId===s.org?.id&&g.active&&g.acceptedAt&&g.version===VERSION);
   const unitExists=(s,u)=>u==='org'||s.units.some(x=>x.id===u);
   function covers(s,m,u){return (m.scopes||[]).some(g=>{if(!unitExists(s,g.unitId))return false;if(g.unitId===u)return true;if(!g.includeSubUnits)return false;const seen=new Set();while(u&&u!=='org'&&!seen.has(u)){seen.add(u);u=s.units.find(x=>x.id===u)?.parentId;if(u===g.unitId)return true;}return false;});}
   function consent(s,m){if(m.accountId!==s.currentAccountId)throw Error("Only the account owner can confirm sharing.");const existing=grant(s,m);if(existing)return existing;if(s.grants.some(g=>g.accountId===m.accountId&&g.active&&g.organizationId!==s.org.id))throw Error('Business sharing is already active in another organization.');const g={id:id(),memberId:m.id,accountId:m.accountId,organizationId:s.org.id,active:true,types:[...TYPES],existingAndFuture:true,version:VERSION,acceptedAt:now(),terminatedAt:null};s.grants.push(g);return g;}
-  function accept(s,inviteId){expire(s);const i=s.invites.find(x=>x.id===inviteId);const a=s.accounts.find(x=>x.id===s.currentAccountId);if(!i||!a||i.email.toLowerCase()!==a.email.toLowerCase()||i.organizationId!==s.org?.id)throw Error('Only the invited account can accept.');if(i.status==='accepted')return member(s,a.id);if(i.status!=='pending')throw Error('This invitation is no longer pending.');if(member(s,a.id))throw Error('Already a member.');if(!['Admin','Member'].includes(i.access)||!['Agent','Manager'].includes(i.role)||!unitExists(s,i.unitId)||(i.role==='Manager'&&(!i.scopes.length||i.scopes.some(g=>!unitExists(s,g.unitId)))))throw Error('The invitation configuration is no longer valid. Ask the administrator to invite again.');if(s.grants.some(g=>g.accountId===a.id&&g.active))throw Error('Business sharing is already active in an organization.');const m={id:id(),accountId:a.id,email:a.email,name:a.name,displayName:i.displayName,unitId:i.unitId,access:i.access,role:i.role,scopes:i.scopes.map(g=>({...g}))};const g=consent(s,m);s.members.push(m);i.status='accepted';i.acceptedAt=g.acceptedAt;i.memberId=m.id;return m;}
+  function accept(s,inviteId){expire(s);const i=s.invites.find(x=>x.id===inviteId);const a=s.accounts.find(x=>x.id===s.currentAccountId);if(!i||!a||i.email.toLowerCase()!==a.email.toLowerCase()||i.organizationId!==s.org?.id)throw Error('Only the invited account can accept.');if(i.status==='accepted')return member(s,a.id);if(i.status!=='pending')throw Error('This invitation is no longer pending.');if(activeMembership(s,a.id))throw Error('Leave your current organization before accepting another invitation.');if(!['Admin','Member'].includes(i.access)||!['Agent','Manager'].includes(i.role)||!unitExists(s,i.unitId)||(i.role==='Manager'&&(!i.scopes.length||i.scopes.some(g=>!unitExists(s,g.unitId)))))throw Error('The invitation configuration is no longer valid. Ask the administrator to invite again.');if(s.grants.some(g=>g.accountId===a.id&&g.active))throw Error('Business sharing is already active in an organization.');const m={id:id(),accountId:a.id,email:a.email,name:a.name,displayName:i.displayName,unitId:i.unitId,access:i.access,role:i.role,scopes:i.scopes.map(g=>({...g}))};const g=consent(s,m);s.members.push(m);i.status='accepted';i.acceptedAt=g.acceptedAt;i.memberId=m.id;return m;}
   function terminate(s,memberId,reason){const m=s.members.find(x=>x.id===memberId);if(!m||m.access==='Owner')throw Error('Owner cannot leave or be removed.');s.grants.filter(g=>g.memberId===m.id&&g.active).forEach(g=>{g.active=false;g.terminatedAt=now();g.reason=reason;});s.members=s.members.filter(x=>x.id!==m.id);s.terminatedMembers.push({...m,terminatedAt:now(),reason});}
   function visible(s){const viewer=member(s);if(!viewer||viewer.role!=='Manager'||!grant(s,viewer))return [];return s.business.filter(r=>{const owner=member(s,r.accountId),g=grant(s,owner);return owner&&g&&r.shareable===true&&g.types.includes(r.type)&&TYPES.includes(r.type)&&covers(s,viewer,owner.unitId);});}
-  target.TeamSharing={VERSION,TYPES,accounts,accountId,migrate,expire,member,grant,canConfigure,covers,consent,accept,terminate,visible};
+  target.TeamSharing={workspaces,activeMembership,selectWorkspace,beginOrganization,selectAccountWorkspace,VERSION,TYPES,accounts,accountId,migrate,expire,member,grant,canConfigure,covers,consent,accept,terminate,visible};
 })(typeof module!=='undefined'?module.exports:window);

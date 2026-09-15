@@ -217,3 +217,8 @@
 #team-view .tv-demo>button{margin:10px 8px 0 0}
 #team-view .tv-actions{flex-wrap:wrap}
 @media(max-width:600px){#team-view .tv-business-row{align-items:flex-start}#team-view .tv-business-row strong{overflow-wrap:anywhere}#team-view .tv-actions .primary{white-space:normal}}
+#team-view .tv-invitation-history{margin-top:20px;border-top:1px solid #e5e7eb;padding-top:16px}
+#team-view .tv-invitation-history summary{cursor:pointer;font-weight:600}
+#team-view .tv-invitation-status{font-size:13px;white-space:nowrap;color:#52708c}
+#team-view .tv-received-invite{padding:16px 0;border-bottom:1px solid #e5e7eb}
+#team-view .tv-received-invite:last-of-type{border-bottom:0}

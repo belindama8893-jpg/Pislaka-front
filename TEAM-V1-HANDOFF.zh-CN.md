@@ -17,9 +17,11 @@
 
 说明版本：`account-business-v1`，创建者和受邀成员采用相同范围。
 
-> By joining or creating this organization, you agree to share all your existing and future leads, listings, and related business follow-up records in Pislaka with authorized managers at [organization] while you remain a member. This grants access; it does not transfer ownership.
+页面主文案（仅英文）：
 
-中文含义：加入或创建组织即确认，在成员关系有效期间，组织内获得授权的管理者可查看本账号已有及新增的全部线索、房源和相关业务跟进记录；只授予访问权限，不转移归属、不复制数据。
+> Share all your existing and future leads, listings and business follow-ups with authorized managers at [Organization] while you’re a member. Your data remains yours. Sharing stops when you leave.
+
+`Sharing details` 默认折叠，展开明确：创建或加入即确认只读访问，不转移归属、不复制记录、不新增删除/转派/代发权限，并列出排除类型。文案精简不改变原授权范围和版本。页面删除中文说明及演示控件的中文标签。
 
 只包含 `lead / listing / followup`。不包含私人聊天、完整 WhatsApp 会话、账号安全、个人账单、本账号无权再共享的数据；合同等后续类型必须另行明确授权。只读查看、分析和建议，不因本次授权增加删除、转派、代发消息等写权限。
 
@@ -129,3 +131,12 @@ Reset organization 需确认，只重置 Team 组织测试状态，保留测试�
 浏览器实测（独立 4181 origin）：两步创建、Owner 角色/范围编辑、已有账号 Pending 且成员仍为 1、Pending 不阻挡完成、Ahmed 本人邀请卡、接受后历史业务 3 条、新增后 4 条且 Agent 统计一致、Agent 无管理业务、退出后 0 条、刷新仍为 0。另已验证未知邮箱 Pending、模拟重发/撤销、组织树模板新增、成员搜索空结果、原 Leads/Listings 页面正常打开。390px 窄屏时组织/成员容器单列排列，宽度 352px，页面无横向溢出（scrollWidth=clientWidth=390）。
 
 待正式后端完成：真实认证及邮箱归属验证、事务/幂等与唯一约束、持久数据库、真实邀请通知、授权审计、实时失效/缓存隔离、业务表及不可再共享数据过滤、API 与 MCP 服务端统一授权、并发与安全测试。前端隐藏按钮、localStorage 和本地筛选仅为演示，不代表正式权限安全已实现。
+
+## 9. Team 入口和邀请历史更新
+
+- 无有效组织：My Organization 空态 + Create Organization，下面为 Invitations。创建组织仍走原两步设置，不把待处理邀请当作成员关系。
+- 已加入：My Organization 展示当前组织和 Owner/Admin/Member 身份；不拆成“我创建/我加入”两个固定页面，也不提供多组织切换。
+- 收件人的 Invitations 显示 Pending 操作卡；已处理记录在默认展开的 Invitation history 中保留 Accepted / Declined / Revoked / Expired，不再消失。拒绝后无接受按钮，刷新保持；邀请人可在成员区域下方查看相同历史。
+- 历史邀请不计正式成员数；重复邀请产生新记录，旧状态不覆盖。拒绝/撤销动作写 resolvedAt；旧记录没有该时间时不伪造。
+- 为使不同模拟账号在无组织时可以各自创建组织，本地 otherWorkspaces 保留其他账号的组织快照，切换 Demo 账号时自动定位该账号组织；这不是产品的多组织切换。授权数组仍统一保存并检查跨组织限制，同一账号不能同时创建/加入两个有效组织。创建另一个模拟账号的组织不覆盖原组织、邀请或业务。
+- 新增两项测试覆盖独立组织保留、单组织限制和已处理邀请刷新。当前共 14 项测试通过。浏览器独立 4182 origin 已验证：Ahmed 拒绝后双方显示 Declined、刷新保留、Ahmed 可创建自己的组织，切回 Ayesha 原组织和历史仍存在。
