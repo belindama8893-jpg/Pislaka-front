@@ -5366,9 +5366,11 @@
         },
         team: {
           name: "Team Expert",
-          description: "Surfaces the priorities that need a manager’s attention.",
+          description: "Ask about team priorities, follow-up support and branch performance within your management scope.",
           capabilities: [
-            { name: "Identify Team Priorities", icon: "clipboard-list" }
+            { name: "What are my team priorities today?", icon: "clipboard-list" },
+            { name: "Which agents need follow-up support?", icon: "users" },
+            { name: "How is each branch performing?", icon: "chart-no-axes-combined" }
           ]
         }
       };
@@ -5512,7 +5514,7 @@
       }
 
       expertTabs.forEach((tab, index) => {
-        tab.addEventListener("click", () => tab.dataset.expert === "team" ? showView("team") : renderExpert(tab.dataset.expert));
+        tab.addEventListener("click", () => renderExpert(tab.dataset.expert));
         tab.addEventListener("keydown", (event) => {
           if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
           event.preventDefault();

@@ -222,3 +222,12 @@
 #team-view .tv-invitation-status{font-size:13px;white-space:nowrap;color:#52708c}
 #team-view .tv-received-invite{padding:16px 0;border-bottom:1px solid #e5e7eb}
 #team-view .tv-received-invite:last-of-type{border-bottom:0}
+/* Compact unified member and invitation rows. */
+#team-view .tv-member-identity strong{display:block;overflow-wrap:anywhere}
+#team-view .tv-member-identity .tv-compact-unit{display:block}
+#team-view .tv-member-compact{flex-wrap:wrap;min-width:0}
+#team-view .tv-member-identity{flex:1 1 150px;min-width:0}
+#team-view .tv-member-compact .tv-actions{flex-wrap:wrap;max-width:100%;margin-left:auto}
+#team-view .tv-member-filters{flex-wrap:wrap}
+#team-view .tv-filter-options{flex-wrap:wrap}
+#team-view .tv-demo .tv-business{margin-top:20px}

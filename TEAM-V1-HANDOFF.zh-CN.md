@@ -140,3 +140,18 @@ Reset organization 需确认，只重置 Team 组织测试状态，保留测试�
 - 历史邀请不计正式成员数；重复邀请产生新记录，旧状态不覆盖。拒绝/撤销动作写 resolvedAt；旧记录没有该时间时不伪造。
 - 为使不同模拟账号在无组织时可以各自创建组织，本地 otherWorkspaces 保留其他账号的组织快照，切换 Demo 账号时自动定位该账号组织；这不是产品的多组织切换。授权数组仍统一保存并检查跨组织限制，同一账号不能同时创建/加入两个有效组织。创建另一个模拟账号的组织不覆盖原组织、邀请或业务。
 - 新增两项测试覆盖独立组织保留、单组织限制和已处理邀请刷新。当前共 14 项测试通过。浏览器独立 4182 origin 已验证：Ahmed 拒绝后双方显示 Declined、刷新保留、Ahmed 可创建自己的组织，切回 Ayesha 原组织和历史仍存在。
+
+## 10. 组织页面精简与统一人员列表（最新交互）
+
+本节取代上节管理者端独立邀请历史的展示方案，数据层仍保留完整记录。
+
+- 组织页移除提问卡片与 Shared business 大卡片。首页 Team 专家标签展示团队优先事项、跟进支持、分支表现三个提问提示；侧栏 Team 继续进入组织管理。
+- 只读共享业务预览与同源分析收进 Demo controls，展开后可测试；旧 Owner 必须补确认的授权说明仍独立保留。成员详情继续显示授权状态。
+- Members 保留自己，标记 (you)，Owner 不显示移除按钮。按邮箱合并当前有效成员或最新邀请，不再重复展示 Accepted 历史行。
+- Active：Edit / Remove；Pending：Edit / Resend / Revoke；Declined、Expired、Revoked：Invite again / Delete。
+- Edit invitation 保留目标邮箱，更新单元、备注、拟角色和管理范围，仍为 Pending。再次邀请打开预填表单并创建新邀请，旧记录不被覆盖。服务端接受时必须展示并确认最新拟配置（正式实现应使用邀请修订版本避免并发修改）。
+- Delete 只将已结束邀请标记 hiddenFromList，保留底层记录和收件人的处理历史。正式成员移除仍终止共享。
+- 状态筛选 All / Active / Pending / Other statuses，后者包含拒绝、过期、撤销。姓名/邮箱与所属单元分行，长邮箱换行，操作按钮可换行，避免横向挤压。
+- 被邀请人的 Invitations 及处理历史不变；只合并管理者端列表。
+
+验证：14 项已有授权测试通过；浏览器独立 4182 数据验证 Declined 同列表、Invite again 新建 Pending、Edit invitation 修改备注仍为 Pending、Revoke 显示 Revoked、Delete 提示保留记录。组织页不再展示独立问题卡片和业务预览。
