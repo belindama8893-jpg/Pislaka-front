@@ -4477,6 +4477,7 @@
         .listing-management-actions > .listing-action.danger { align-self: flex-start; }
       }
     </style>
+  <link rel="stylesheet" href="./team-v1.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -4502,6 +4503,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
             Leads <span class="nav-badge" id="lead-nav-badge">1</span>
           </button>
+          <button class="nav-item view-nav" data-view="team"><i data-lucide="network" aria-hidden="true"></i>Team</button>
         </nav>
 
         <nav class="nav-group conversation-section" aria-label="Agent chat">
@@ -4544,6 +4546,7 @@
         </header>
 
         <div class="content">
+          <section id="team-view" class="team-view" aria-label="Team workspace" hidden></section>
           <section class="home-view" id="home-view">
             <div class="hero">
               <h1>Meet your AI team</h1>
@@ -5363,9 +5366,11 @@
         },
         team: {
           name: "Team Expert",
-          description: "Surfaces the priorities that need a manager’s attention.",
+          description: "Ask about team priorities, follow-up support and branch performance within your management scope.",
           capabilities: [
-            { name: "Identify Team Priorities", icon: "clipboard-list" }
+            { name: "What are my team priorities today?", icon: "clipboard-list" },
+            { name: "Which agents need follow-up support?", icon: "users" },
+            { name: "How is each branch performing?", icon: "chart-no-axes-combined" }
           ]
         }
       };
@@ -6320,6 +6325,8 @@
 
       function showView(view) {
         const showFlow = view === "flow";
+        document.getElementById("team-view").hidden = view !== "team";
+        if (view === "team") window.TeamV1?.open();
         const activeNavigationView = showFlow ? "home" : view === "listing-detail" ? "listings" : view === "lead-detail" ? "leads" : view;
         homeView.classList.toggle("hidden", view !== "home");
         flowView.classList.toggle("visible", showFlow);
@@ -6777,5 +6784,7 @@
 
       confirmationEditForm.addEventListener("submit", (event) => event.preventDefault());
     </script>
+  <script src="./team-sharing.js"></script>
+  <script src="./team-v1.js"></script>
   </body>
 </html>
