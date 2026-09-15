@@ -206,3 +206,14 @@
  .tv-member-identity{min-width:125px}
  .tv-member-compact .tv-actions{gap:4px}
 }
+
+/* Account-level sharing preview, reusing the existing Team cards. */
+#team-view .tv-sharing-copy p,#team-view .tv-card>p{line-height:1.6}
+#team-view .tv-sharing-status{display:grid;gap:6px;margin:16px 0}
+#team-view .tv-business-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #e5e7eb}
+#team-view .tv-business-row small{display:block;margin-top:4px}
+#team-view .tv-demo{margin-top:24px;border-style:dashed}
+#team-view .tv-demo summary{cursor:pointer;font-weight:600}
+#team-view .tv-demo>button{margin:10px 8px 0 0}
+#team-view .tv-actions{flex-wrap:wrap}
+@media(max-width:600px){#team-view .tv-business-row{align-items:flex-start}#team-view .tv-business-row strong{overflow-wrap:anywhere}#team-view .tv-actions .primary{white-space:normal}}

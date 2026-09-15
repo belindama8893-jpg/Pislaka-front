@@ -1,6 +1,7 @@
 /* Team V1: isolated, local-only organization prototype. No API calls. */
 (() => {
   'use strict';
+  const Sharing=window.TeamSharing;
   const KEY = 'pislaka.team-v1.v1';
   const root = document.getElementById('team-view');
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -9,12 +10,12 @@
   let selectedUnit = 'org', includeDescendants = true, searchText = '', roleFilter = 'All', statusFilter = 'All';
   const collapsedUnits = new Set();
   let page = 'setup', tab = 'organization', status = '', answer = '';
-  try { const saved = JSON.parse(localStorage.getItem(KEY)); if (saved?.version === 1 && Array.isArray(saved.units) && Array.isArray(saved.members)) state = saved; } catch { status = 'Saved organization data could not be read.'; }
-  state.invites ||= [];
-  // Resume legacy Structure, Members and Review drafts in the combined workspace.
-  state.step = Math.min(state.step, 2);
-  const directory = [{name:'Ayesha Khan',email:'ayesha@pislaka.example'},{name:'Sara Ahmed',email:'sara@pislaka.example'},{name:'Ali Raza',email:'ali@pislaka.example'}];
-  state.members.forEach(m => { m.email ||= m.id === 'self' ? directory[0].email : `${m.name.toLowerCase().replace(/[^a-z0-9]+/g,'.')}@pislaka.example`; });
+  try { const saved = JSON.parse(localStorage.getItem(KEY)); if ([1,2].includes(saved?.version) && Array.isArray(saved.units) && Array.isArray(saved.members)) state = saved; } catch { status = 'Saved organization data could not be read.'; }
+  const oldVersion=state.version;
+  if(oldVersion===1&&state.org){try{if(!localStorage.getItem(KEY+'.before-sharing'))localStorage.setItem(KEY+'.before-sharing',JSON.stringify(state));}catch{}}
+  state=Sharing.migrate(state);
+  state.step=Math.min(state.step,2);
+  let selectedBusiness=null;
   const zones = {'Pakistan':'Asia/Karachi','United Arab Emirates':'Asia/Dubai','Saudi Arabia':'Asia/Riyadh','United Kingdom':'Europe/London','China':'Asia/Shanghai','Other':'UTC'};
   if (state.complete) page = 'home';
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); status = ''; } catch { status = 'Browser storage unavailable. Changes last for this session only.'; } };
@@ -47,10 +48,10 @@
     const visibleUnits=selectedUnit==='org'?descendantsOf('org'):new Set([selectedUnit]);
     const matches=m=>visibleUnits.has(m.unitId)&&(roleFilter==='All'||m.role===roleFilter)&&`${m.displayName || ''} ${m.name} ${m.email}`.toLowerCase().includes(searchText.trim().toLowerCase());
     const list=statusFilter==='Pending'?[]:state.members.filter(matches);
-    const invites=statusFilter==='Active'?[]:state.invites.filter(matches);
+    const invites=statusFilter==='Active'?[]:state.invites.filter(i=>i.status==='pending'&&matches(i));
     const row=(m,pending=false)=>{
-      const name=m.displayName || m.name || m.email;
-      return `<article class="tv-member tv-member-compact"><div class="tv-member-identity"><strong>${esc(name)}${m.id==='self'?' (you)':''}</strong>${name!==m.email?`<small>${esc(m.email)}</small>`:''}${selectedUnit==='org'?`<small class="tv-compact-unit">${esc(unitName(m.unitId))}</small>`:''}</div><div class="tv-member-meta"><span>${esc(m.role)}</span>${m.access!=='Member'?`<small>${esc(m.access)}</small>`:''}${pending?'<small class="tv-pending-label">Pending</small>':''}</div><div class="tv-actions">${pending?`${btn('Resend','resend','listing-action',`data-id="${m.id}"`)}${deleteButton('Revoke invitation','revoke',m.id)}`:`${btn('Edit','edit-member','listing-action',`data-id="${m.id}" aria-label="Edit member ${esc(name)}"`)}${m.access!=='Owner'&&m.id!=='self'?deleteButton('Remove member','remove-member',m.id):''}`}</div></article>`;
+      const name=m.displayName || (pending?m.email:m.name) || m.email;
+      return `<article class="tv-member tv-member-compact"><div class="tv-member-identity"><strong>${esc(name)}${m.accountId===state.currentAccountId?' (you)':''}</strong>${name!==m.email?`<small>${esc(m.email)}</small>`:''}${selectedUnit==='org'?`<small class="tv-compact-unit">${esc(unitName(m.unitId))}</small>`:''}</div><div class="tv-member-meta"><span>${esc(m.role)}</span>${m.access!=='Member'?`<small>${esc(m.access)}</small>`:''}${pending?'<small class="tv-pending-label">Pending acceptance</small>':''}</div><div class="tv-actions">${pending?`${btn('Resend','resend','listing-action',`data-id="${m.id}"`)}${deleteButton('Revoke invitation','revoke',m.id)}`:`${btn('Edit','edit-member','listing-action',`data-id="${m.id}" aria-label="Edit member ${esc(name)}"`)}${m.access!=='Owner'?deleteButton('Remove member','remove-member',m.id):''}`}</div></article>`;
     };
     return {html:list.length+invites.length?list.map(m=>row(m)).join('')+invites.map(m=>row(m,true)).join(''):'<div class="tv-results-empty">No matching members.</div>'};
   }
@@ -66,23 +67,55 @@
   function organizationWorkspace() {
     if(selectedUnit!=='org'&&!state.units.some(u=>u.id===selectedUnit))resetFilters();
     return `<div class="tv-linked-workspace"><section class="tv-linked-structure" aria-label="Organization structure"><h2>Organization structure</h2>${!state.units.length?`<div class="tv-tree-templates">${[['simple','Simple Team'],['branches','Teams & Branches'],['custom','Custom Structure']].map(([id,title])=>btn(title,'template','',`data-id="${id}"`)).join('')}</div>`:''}<ul class="tv-linked-tree">${treeNode('org')}</ul></section>
-      <section class="tv-linked-members" aria-label="Unit member list"><header class="tv-row"><h2>Members</h2>${btn('<i data-lucide="plus" aria-hidden="true"></i>Add member','add-member','listing-action primary')}</header>
+      <section class="tv-linked-members" aria-label="Unit member list"><header class="tv-row"><h2>Members</h2>${btn('<i data-lucide="plus" aria-hidden="true"></i>Invite member','add-member','listing-action primary')}</header>
       <div class="tv-member-filters"><input type="search" id="tv-member-search" aria-label="Search members" placeholder="Name or email" value="${esc(searchText)}">${filterGroup('Business Role','filter-role',['All','Agent','Manager'],roleFilter)}${filterGroup('Status','filter-status',['All','Active','Pending'],statusFilter)}</div><div id="tv-member-results">${memberResults().html}</div></section></div>`;
   }
-  function organizationForm() { return `<form id="tv-org-form" class="tv-card"><h2>${state.org ? 'Organization details' : 'Create your organization'}</h2><label>Organization name<input name="name" required maxlength="80" placeholder="e.g. Prime Estates" value="${esc(state.org?.name || '')}" /></label><div class="tv-grid two"><label>Country / Region<select name="country">${options(['Pakistan','United Arab Emirates','Saudi Arabia','United Kingdom','China','Other'],state.org?.country || 'Pakistan')}</select></label></div>${page === 'settings' ? `<details class="tv-advanced"><summary>Advanced settings</summary><label>Time zone<select name="timezone">${options(Object.values(zones),state.org?.timezone || 'Asia/Karachi')}</select></label></details>` : ''}<div class="tv-footer">${btn('Back','back')}<button class="primary" type="submit">${page === 'settings' ? 'Save details' : state.org ? 'Save & Continue' : 'Create & Continue'}</button></div></form>`; }
+  function organizationForm() { return `<form id="tv-org-form" class="tv-card"><h2>${state.org ? 'Organization details' : 'Create your organization'}</h2><label>Organization name<input name="name" required maxlength="80" placeholder="e.g. Prime Estates" value="${esc(state.org?.name || '')}" /></label><div class="tv-grid two"><label>Country / Region<select name="country">${options(['Pakistan','United Arab Emirates','Saudi Arabia','United Kingdom','China','Other'],state.org?.country || 'Pakistan')}</select></label></div>${page === 'settings' ? `<details class="tv-advanced"><summary>Advanced settings</summary><label>Time zone<select name="timezone">${options(Object.values(zones),state.org?.timezone || 'Asia/Karachi')}</select></label></details>` : ''}${!state.org?`<div class="tv-sharing-copy">${sharingCopy('your organization')}</div>`:''}<div class="tv-footer">${btn('Back','back')}<button class="primary" type="submit">${page === 'settings' ? 'Save details' : state.org ? 'Save & Continue' : 'Create & Continue'}</button></div></form>`; }
+  function sharingCopy(org) {
+    return `<h3>Business Data Sharing</h3><p>By joining or creating this organization, you agree to share all your existing and future leads, listings, and related business follow-up records in Pislaka with authorized managers at ${esc(org)} while you remain a member. This grants access; it does not transfer ownership.</p><p>加入或创建组织即确认：在成员关系有效期间，组织内获得授权的管理者可查看本账号已有及新增的全部线索、房源和相关业务跟进记录。仅授予访问权限，不转移归属、不复制业务数据。</p><small>Read-only sharing excludes private chats, full WhatsApp conversations, account security, personal billing and data you cannot re-share. Contracts are not included. Sharing does not grant deletion, reassignment or message-sending permissions.</small>`;
+  }
+  function sharingStatus(m) {
+    const g=Sharing.grant(state,m);
+    return `<div class="tv-sharing-status"><strong>Business sharing: ${g?'Active':'Not confirmed'}</strong>${g?`<small>Scope: Existing and future business data</small><small>Accepted at: ${esc(g.acceptedAt)}</small>`:''}</div>`;
+  }
+  function businessAnswer() {
+    const records=Sharing.visible(state);
+    return records.length?`Within your authorized scope: ${records.filter(r=>r.type==='lead').length} leads, ${records.filter(r=>r.type==='listing').length} listings and ${records.filter(r=>r.type==='followup').length} follow-up records. Review the follow-ups with the responsible agent. This preview provides suggestions only.`:'No shared business is available within your current management scope.';
+  }
+  function sharingPanel() {
+    const m=Sharing.member(state);if(!m)return '';
+    if(!Sharing.grant(state,m))return `<section class="tv-card">${sharingCopy(state.org.name)}${m.access==='Owner'?btn('Confirm & Share Business Data','confirm-sharing','primary'):''}</section>`;
+    const rows=Sharing.visible(state), detail=rows.find(r=>r.id===selectedBusiness);
+    return `<section class="tv-card tv-business">${m.access==='Admin'?btn('Leave Organization & Stop Sharing','leave'):''}<h2>Shared business · ${rows.length}</h2><p>${esc(businessAnswer())}</p>${rows.map(r=>`<article class="tv-business-row"><div><strong>${esc(r.title)}</strong><small>${esc(r.type)} · ${esc(state.accounts.find(a=>a.id===r.accountId)?.name||r.accountId)}</small></div>${btn('View','business-detail','listing-action',`data-id="${r.id}"`)}</article>`).join('')}${detail?`<div class="tv-note"><strong>${esc(detail.title)}</strong><p>${esc(detail.detail)}</p><small>${esc(detail.createdAt)}</small></div>`:''}${btn('Analyze shared business','business-summary')}${answer&&!Sharing.canConfigure(state)?`<p role="status">${esc(answer)}</p>`:''}</section>`;
+  }
+  function memberHome() {
+    const account=state.accounts.find(a=>a.id===state.currentAccountId),m=Sharing.member(state);
+    const invites=state.invites.filter(i=>i.status==='pending'&&i.email.toLowerCase()===account.email.toLowerCase());
+    return header('Your Team',esc(account.name||account.email))+invites.map(i=>`<section class="tv-card"><h2>Invitation to ${esc(state.org.name)}</h2><p>Invited by: ${esc(state.accounts.find(a=>a.id===i.invitedBy)?.name||i.invitedBy)}</p><p>Organization Unit: ${esc(path(i.unitId))}</p><p>Role: ${esc(i.role)} · Organization Access: ${esc(i.access)}</p>${i.role==='Manager'?`<p>Proposed Management Scope: ${esc(scopeText(i))}</p>`:''}${sharingCopy(state.org.name)}<div class="tv-actions">${btn('Accept & Share Business Data','accept-invite','primary',`data-id="${i.id}"`)}${btn('Decline','decline-invite','',`data-id="${i.id}"`)}</div></section>`).join('')+(m?`<section class="tv-card"><h2>${esc(state.org.name)}</h2><p>${esc(m.role)} · ${esc(m.access)} · ${esc(path(m.unitId))}</p>${sharingStatus(m)}${btn('Leave Organization & Stop Sharing','leave')}</section>${sharingPanel()}`:!invites.length?'<section class="tv-card"><p>No active membership or pending invitation.</p></section>':'');
+  }
+  function demoControls() {
+    const accounts=[...state.accounts];state.invites.forEach(i=>{if(!accounts.some(a=>a.email.toLowerCase()===i.email.toLowerCase()))accounts.push({id:Sharing.accountId(i.email),email:i.email,name:i.email});});
+    return `<details class="tv-card tv-demo"><summary>Demo controls · 演示控制</summary><p>Simulated accounts and records only. No real emails are sent. Account switching is a prototype tool, not an administrator capability.</p><label>Simulated account<select id="tv-demo-account">${accounts.map(a=>`<option value="${esc(a.id)}" ${a.id===state.currentAccountId?'selected':''}>${esc(a.name)} · ${esc(a.email)}</option>`).join('')}</select></label><div class="tv-grid two"><label>Test record owner<select id="tv-demo-owner">${accounts.map(a=>`<option value="${esc(a.id)}" ${a.email==='ahmed@pislaka.example'?'selected':''}>${esc(a.email)}</option>`).join('')}</select></label><label>Test record type<select id="tv-demo-type">${options(['lead','listing','followup'],'lead')}</select></label></div>${btn('Add test business record','demo-record')}${btn('Expire pending invitations','demo-expire')}</details>`;
+  }
   function render(focus = false) {
+    Sharing.expire(state);
+    if(answer)answer=businessAnswer();
+    if(!Sharing.visible(state).some(r=>r.id===selectedBusiness))selectedBusiness=null;
     let html = '';
     if (!state.org && state.step === 0) html = header('Team','') + `<div class="tv-card tv-empty"><div class="tv-symbol"><i data-lucide="network"></i></div><h1>Build your team in Pislaka</h1>${btn('Set up Organization →','start','primary')}</div>`;
-    else if (page === 'home' && state.complete) html = header('Your Team Agent',`A shared view of ${esc(state.org.name)}.`,btn('Organization Settings','settings')) + `<div class="tv-grid">${btn(`<h3>Organization</h3><p>${esc(state.org.name)}</p>`,'open-summary','tv-card tv-summary-card','data-id="organization" aria-label="Open organization settings"')}${btn(`<h3>Members</h3><div class="tv-stat">${state.members.length}</div>`,'open-summary','tv-card tv-summary-card','data-id="members" aria-label="View all members"')}${btn(`<h3>Managers</h3><div class="tv-stat">${state.members.filter(m=>m.role==='Manager').length}</div>`,'open-summary','tv-card tv-summary-card','data-id="managers" aria-label="View managers"')}</div><div class="tv-card"><span class="tv-kicker">Start a conversation</span><h2 style="margin-top:12px">What needs your team's attention?</h2><div class="tv-grid">${['What are my team priorities today?','Which agents need follow-up support?','How is each branch performing?'].map((q,i)=>btn(q,'question','tv-template',`data-id="${i}"`)).join('')}</div>${answer ? `<div class="tv-note tv-answer" role="status">${esc(answer)}</div>` : ''}</div>`;
+    else if (page === 'home' && state.complete) html = header('Your Team Agent',`A shared view of ${esc(state.org.name)}.`,btn('Organization Settings','settings')) + `<div class="tv-grid">${btn(`<h3>Organization</h3><p>${esc(state.org.name)}</p>`,'open-summary','tv-card tv-summary-card','data-id="organization" aria-label="Open organization settings"')}${btn(`<h3>Members</h3><div class="tv-stat">${state.members.length}</div>`,'open-summary','tv-card tv-summary-card','data-id="members" aria-label="View all members"')}${btn(`<h3>Managers</h3><div class="tv-stat">${state.members.filter(m=>m.role==='Manager'&&m.scopes.length&&Sharing.grant(state,m)).length}</div>`,'open-summary','tv-card tv-summary-card','data-id="managers" aria-label="View managers"')}</div><div class="tv-card"><span class="tv-kicker">Start a conversation</span><h2 style="margin-top:12px">What needs your team's attention?</h2><div class="tv-grid">${['What are my team priorities today?','Which agents need follow-up support?','How is each branch performing?'].map((q,i)=>btn(q,'question','tv-template',`data-id="${i}"`)).join('')}</div>${answer ? `<div class="tv-note tv-answer" role="status">${esc(answer)}</div>` : ''}</div>`;
     else if (page === 'settings') html = header('Organization Settings',esc(state.org.name),btn('← Team Agent','home')) + `<div class="tv-settings-toolbar"><nav class="tv-tabs" aria-label="Organization settings">${[['details','Details'],['organization','Organization & Members']].map(([id,label])=>btn(label,'tab','',`data-id="${id}" ${tab===id?'aria-current="page"':''}`)).join('')}</nav></div>${tab === 'details' ? organizationForm() : organizationWorkspace()}`;
     else html = header('Set up your organization','',btn('Save & exit','exit')) + `<ol class="tv-steps">${stepNames.map((s,i)=>`<li class="${state.step===i+1?'current':''}" ${state.step===i+1?'aria-current="step"':''}><span>0${i+1}</span>${s}</li>`).join('')}</ol>${state.step === 1 ? organizationForm() : organizationWorkspace()}${state.step>1 ? `<div class="tv-footer">${btn('← Back','back')}${btn('Complete setup →','next','primary')}</div>` : ''}`;
-    if(state.org) html += `<div class="tv-section-toolbar">${btn('<i data-lucide="rotate-ccw" aria-hidden="true"></i>Reset organization','reset-organization','listing-action')}</div>`;
+    if(state.org && Sharing.canConfigure(state)) html += `<div class="tv-section-toolbar">${btn('<i data-lucide="rotate-ccw" aria-hidden="true"></i>Reset organization','reset-organization','listing-action')}</div>`;
+    if(state.org&&!Sharing.canConfigure(state))html=memberHome();
+    if(state.org&&Sharing.canConfigure(state)&&page==='home')html+=sharingPanel();
+    html+=demoControls();
     root.innerHTML = html + `<p class="tv-status" role="status">${esc(status)}</p><dialog id="tv-dialog" aria-labelledby="tv-dialog-title"></dialog>`;
     root.querySelector('#tv-org-form')?.addEventListener('submit', e => {
-      e.preventDefault(); const f = new FormData(e.target); const name = f.get('name').trim();
+      e.preventDefault(); if(state.org&&!Sharing.canConfigure(state))return; const f = new FormData(e.target); const name = f.get('name').trim();
       if (!name) { e.target.elements.name.setCustomValidity('Enter an organization name.'); e.target.elements.name.reportValidity(); return; }
-      state.org = {...state.org, id:state.org?.id || uid(), name, country:f.get('country'), timezone:f.get('timezone') || (state.org?.country === f.get('country') ? state.org.timezone : zones[f.get('country')]), ownerId:'self'};
-      if (!state.members.length) state.members.push({id:'self',name:'Ayesha Khan',email:directory[0].email,unitId:'org',access:'Owner',role:'Agent',scopes:[]});
+      state.org = {...state.org, id:state.org?.id || uid(), name, country:f.get('country'), timezone:f.get('timezone') || (state.org?.country === f.get('country') ? state.org.timezone : zones[f.get('country')]), ownerId:state.org?.ownerId};
+      if (!state.members.length) {const a=state.accounts.find(a=>a.id===state.currentAccountId);const m={id:uid(),accountId:a.id,name:a.name,email:a.email,unitId:'org',access:'Owner',role:'Agent',scopes:[]};state.members.push(m);state.org.ownerId=m.id;Sharing.consent(state,m);}
       if (page !== 'settings') state.step=2; save(); render(true); if(page==='settings')flash('Saved');
     });
     root.querySelector('[name=country]')?.addEventListener('change',e=>{const zone=root.querySelector('[name=timezone]');if(zone){zone.value=zones[e.target.value];zone.dispatchEvent(new Event('change'));}});
@@ -90,7 +123,7 @@
     ['input','search','change'].forEach(event=>root.querySelector('#tv-member-search')?.addEventListener(event,e=>{searchText=e.target.value;refreshResults();}));
     enhanceSelects(root);
     window.lucide?.createIcons();
-    if (focus) { root.querySelector('h1')?.focus(); root.closest('.content').scrollTop=0; }
+    if (focus) { root.querySelector('h1')?.focus(); const content=root.closest('.content');if(content)content.scrollTop=0; }
   }
   let toastTimer;
   function flash(message) {
@@ -153,6 +186,7 @@
     enhanceSelects(d);
   }
   function editUnit(id, parentId = 'org') {
+    if(!Sharing.canConfigure(state))return;
     const u=state.units.find(x=>x.id===id); const descendants=new Set([id]);
     let changed=true; while(changed) { changed=false; state.units.forEach(x=>{if(descendants.has(x.parentId)&&!descendants.has(x.id)){descendants.add(x.id);changed=true;}}); }
     modal(u?'Edit Organization Unit':`Add unit under ${esc(parentId==='org'?state.org.name:state.units.find(x=>x.id===parentId).name)}`,`<label>Unit name<input name="name" maxlength="80" required value="${esc(u?.name || '')}"></label><div class="tv-grid two"><label>Unit type (optional)<select name="type"><option value="">Not specified</option>${options(['Team','Branch','Region','Department','Other'],u?.type || '')}</select></label>${u?`<label>Parent unit<select name="parentId">${[{id:'org',name:state.org.name},...state.units.filter(x=>!descendants.has(x.id)).map(x=>({id:x.id,name:path(x.id)}))].map(x=>`<option value="${x.id}" ${x.id===(u?.parentId || 'org')?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>`:`<input type="hidden" name="parentId" value="${parentId}">`}</div>`, (f,d)=>{
@@ -165,6 +199,7 @@
     });
   }
   function editMember(id, defaultUnit = 'org') {
+    if(!Sharing.canConfigure(state))return;
     const m=state.members.find(x=>x.id===id);
     // Explicit grants stay separate from inherited coverage, including while covered by an ancestor.
     const grants = new Map((m?.scopes || []).map(s=>[s.unitId, {...s}]));
@@ -180,42 +215,22 @@
     function scopeTree(parent=null) {
       return `<ul class="tv-scope-tree">${scopeNodes.filter(u=>u.parentId===parent).map(u=>`<li><div class="tv-scope-row" data-scope-id="${u.id}"><label class="tv-check"><input type="checkbox" name="scope" value="${u.id}" aria-label="${esc(path(u.id))}"><strong>${esc(u.name)}</strong></label><small class="tv-scope-inherited"></small><label class="tv-check tv-scope-include"><input type="checkbox" name="include-${u.id}" aria-label="Include sub-units of ${esc(path(u.id))}">Include sub-units</label></div>${scopeNodes.some(x=>x.parentId===u.id)?scopeTree(u.id):''}</li>`).join('')}</ul>`;
     }
-    let matched = null;
-    modal(m?'Edit member':'Add member',`<label>Email<input type="email" name="email" required autocomplete="off" maxlength="254" placeholder="name@example.com" value="${esc(m?.email || '')}" ${m?'readonly':''}></label><div id="tv-account-result" aria-live="polite"></div><label>Display name (optional)<input name="displayName" maxlength="80" value="${esc(m?.displayName || '')}" placeholder="Name used in this organization"></label><label>Organization Unit<select name="unitId">${unitOptions(m?.unitId || defaultUnit)}</select></label><div class="tv-grid two"><label>Organization Access<select name="access">${options(id==='self'?['Owner']:['Admin','Member'],m?.access || 'Member')}</select></label><label>Business Role<select name="role">${options(['Agent','Manager'],m?.role || 'Agent')}</select></label></div><div id="tv-management" ${m?.role==='Manager'?'':'hidden'}><h3>Management Scope</h3><div class="tv-scope">${scopeTree()}</div></div>`, (f,d)=>{
+
+    modal(m?'Edit member':'Invite member',`<label>Email<input type="email" name="email" required autocomplete="off" maxlength="254" placeholder="name@example.com" value="${esc(m?.email || '')}" ${m?'readonly':''}></label><label>Display name (optional)<input name="displayName" maxlength="80" value="${esc(m?.displayName || '')}" placeholder="Name used in this organization"></label><label>Organization Unit<select name="unitId">${unitOptions(m?.unitId || defaultUnit)}</select></label><div class="tv-grid two"><label>Organization Access<select name="access">${options(m?.access==='Owner'?['Owner']:['Admin','Member'],m?.access || 'Member')}</select></label><label>Business Role<select name="role">${options(['Agent','Manager'],m?.role || 'Agent')}</select></label></div>${m?sharingStatus(m):''}<div id="tv-management" ${m?.role==='Manager'?'':'hidden'}><h3>Management Scope</h3><div class="tv-scope">${scopeTree()}</div></div>`, (f,d)=>{
+      if(!Sharing.canConfigure(state))return;
       const role=f.get('role'), selected=[...grants.keys()];
       const email=f.get('email').trim().toLowerCase();
       const error=text=>d.querySelector('#tv-form-error').textContent=text;
       if(!m&&state.members.some(x=>x.email.toLowerCase()===email)){error('Already a member.');return;}
-      if(!m&&state.invites.some(x=>x.email===email)){error('An invitation is already pending.');return;}
-      const account=directory.find(x=>x.email===email);
-      if(!m&&account&&matched!==email){error('Select the matching account to continue.');return;}
+      if(!m&&state.invites.some(x=>x.email===email&&x.status==='pending')){error('An invitation is already pending.');return;}
       if(role==='Manager'&&!selected.length){error('Select at least one management unit.');return;}
-      const value={id:m?.id || uid(),email,displayName:f.get('displayName').trim(),name:m?.name || account?.name || email,unitId:f.get('unitId'),access:f.get('access'),role,scopes:role==='Manager'?selected.map(unitId=>({...grants.get(unitId)})):[]};
+      const value={id:m?.id || uid(),email,displayName:f.get('displayName').trim(),name:m?.name || email,unitId:f.get('unitId'),access:f.get('access'),role,scopes:role==='Manager'?selected.map(unitId=>({...grants.get(unitId)})):[]};
       if(m) Object.assign(m,value);
-      else if(account) state.members.push(value);
-      else state.invites.push({...value,status:'pending',sentAt:new Date().toISOString()});
-      d.close();save();render();flash(m?'Saved':account?'Member added':'Invitation sent');
+      else state.invites.push({...value,status:'pending',organizationId:state.org.id,invitedBy:state.currentAccountId,sentAt:new Date().toISOString(),expiresAt:new Date(Date.now()+7*86400000).toISOString()});
+      d.close();selectedBusiness=null;answer='';save();render();flash(m?'Saved':'Pending acceptance');
     });
-    const d=root.querySelector('dialog'), emailInput=d.querySelector('[name=email]'), result=d.querySelector('#tv-account-result'), submit=d.querySelector('[type=submit]');
-    function lookup() {
-      if(m)return;
-      matched=null;
-      const email=emailInput.value.trim().toLowerCase();
-      submit.disabled=true;submit.textContent='Add member';result.replaceChildren();
-      d.querySelector('#tv-form-error').textContent='';
-      if(!email || !emailInput.validity.valid)return;
-      if(state.members.some(x=>x.email.toLowerCase()===email)){result.textContent='Already a member';return;}
-      if(state.invites.some(x=>x.email===email)){result.textContent='Invitation pending';return;}
-      const account=directory.find(x=>x.email===email);
-      if(account){
-        const choice=document.createElement('button');choice.type='button';choice.className='tv-account-choice';
-        choice.innerHTML=`<strong>${esc(account.name)}</strong><small>${esc(account.email)}</small>`;
-        choice.addEventListener('click',()=>{matched=email;choice.setAttribute('aria-pressed','true');submit.disabled=false;});
-        result.append(choice);
-      } else {submit.textContent='Send invitation';submit.disabled=false;}
-    }
-    emailInput.addEventListener('input',lookup);
-    if(!m)lookup();
+    const d=root.querySelector('dialog');
+    if(!m)d.querySelector('[type=submit]').textContent='Invite member';
     d.querySelector('[name=role]').addEventListener('change',e=>d.querySelector('#tv-management').hidden=e.target.value!=='Manager');
     function updateScopeTree() {
       d.querySelectorAll('[data-scope-id]').forEach(row=>{
@@ -243,6 +258,23 @@
   }
   root.addEventListener('click',e=>{
     const b=e.target.closest('[data-action]'); if(!b)return; const a=b.dataset.action,id=b.dataset.id;
+    if(a==='close'){root.querySelector('dialog').close();return;}
+    if(a==='demo-record'){
+      const accountId=root.querySelector('#tv-demo-owner').value,type=root.querySelector('#tv-demo-type').value;
+      state.business.push({id:uid(),accountId,type,title:`New ${type} · ${new Date().toLocaleTimeString()}`,detail:'New mock business record. Ownership remains with the account.',shareable:true,createdAt:new Date().toISOString()});save();render();flash('Test record added');return;
+    }
+    if(a==='demo-expire'){state.invites.filter(i=>i.status==='pending').forEach(i=>i.expiresAt=new Date(Date.now()-1000).toISOString());Sharing.expire(state);save();render();return;}
+    if(a==='accept-invite'||a==='decline-invite'){
+      try{if(a==='accept-invite')Sharing.accept(state,id);else {const i=state.invites.find(i=>i.id===id),account=state.accounts.find(a=>a.id===state.currentAccountId);Sharing.expire(state);if(!i||i.status!=='pending'||i.email.toLowerCase()!==account.email.toLowerCase())throw Error('Only the invited account can decline a pending invitation.');i.status='declined';}save();render();}catch(error){flash(error.message);}return;
+    }
+    if(a==='confirm-sharing'){const m=Sharing.member(state);if(m?.access==='Owner'){try{Sharing.consent(state,m);save();render();}catch(error){flash(error.message);}}return;}
+    if(a==='leave'){
+      const m=Sharing.member(state);if(!m||m.access==='Owner')return;
+      modal('Leave organization & stop sharing?', '<p>Managers in this organization will no longer be able to access your business data. Your Pislaka account and original business records remain unchanged.</p>',(f,d)=>{Sharing.terminate(state,m.id,'left');answer='';selectedBusiness=null;d.close();save();render();});root.querySelector('dialog [type=submit]').textContent='Leave & Stop Sharing';return;
+    }
+    if(a==='business-detail'){selectedBusiness=Sharing.visible(state).find(r=>r.id===id)?.id||null;render();return;}
+    if(a==='business-summary'){answer=businessAnswer();render();return;}
+    if(state.org&&!Sharing.canConfigure(state))return;
     if(a==='toggle-unit'){
       if(collapsedUnits.has(id))collapsedUnits.delete(id);else collapsedUnits.add(id);
       const children=root.querySelector(`[id="children-${id}"]`);children.hidden=collapsedUnits.has(id);
@@ -261,22 +293,22 @@
     if(a==='add-unit'||a==='edit-unit'){editUnit(id);return;}
     if(a==='add-member'||a==='edit-member'){editMember(id,selectedUnit);return;}
     if(a==='remove-unit') {
-      const blocked=state.units.some(x=>x.parentId===id)||[...state.members,...state.invites].some(m=>m.unitId===id||m.scopes.some(s=>s.unitId===id));
+      const blocked=state.units.some(x=>x.parentId===id)||[...state.members,...state.invites.filter(i=>i.status==='pending')].some(m=>m.unitId===id||m.scopes.some(s=>s.unitId===id));
       modal(blocked?'Cannot delete unit':'Delete unit?',`<p>${blocked?'Move its members, child units and management scopes before deleting this unit.':`Delete ${esc(state.units.find(u=>u.id===id)?.name)}?`}</p>`,(f,d)=>{if(!blocked){state.units=state.units.filter(x=>x.id!==id);d.close();save();render();flash('Unit deleted');}});
       const submit=root.querySelector('dialog [type=submit]');submit.textContent='Delete';submit.className='listing-action confirm-danger';submit.hidden=blocked;return;
     }
-    if(a==='resend'){const i=state.invites.find(x=>x.id===id);i.sentAt=new Date().toISOString();save();flash('Invitation resent');return;}
-    if(a==='revoke'){modal('Revoke invitation?',`<p>${esc(state.invites.find(x=>x.id===id).email)}</p>`,(f,d)=>{state.invites=state.invites.filter(x=>x.id!==id);d.close();save();render();flash('Invitation revoked');});root.querySelector('dialog [type=submit]').textContent='Revoke';root.querySelector('dialog [type=submit]').className='listing-action confirm-danger';return;}
+    if(a==='resend'){const i=state.invites.find(x=>x.id===id);if(!i||i.status!=='pending')return;i.sentAt=new Date().toISOString();i.expiresAt=new Date(Date.now()+7*86400000).toISOString();save();flash('Invitation resent');return;}
+    if(a==='revoke'){modal('Revoke invitation?',`<p>${esc(state.invites.find(x=>x.id===id).email)}</p>`,(f,d)=>{state.invites.find(x=>x.id===id).status='revoked';d.close();save();render();flash('Invitation revoked');});root.querySelector('dialog [type=submit]').textContent='Revoke';root.querySelector('dialog [type=submit]').className='listing-action confirm-danger';return;}
     if(a==='remove-member'){
       const member=state.members.find(m=>m.id===id);
-      if(!member || member.access==='Owner' || member.id==='self')return;
-      modal('Remove member?',`<p>Remove ${esc(member.name)} from ${esc(state.org.name)}?</p><p>Their Pislaka account will remain available.</p>`,(f,d)=>{state.members=state.members.filter(m=>m.id!==id);d.close();save();render();flash('Member removed');});
+      if(!member || member.access==='Owner')return;
+      modal('Remove member?',`<p>Remove ${esc(member.name)} from ${esc(state.org.name)}?</p><p>Sharing stops immediately. Their Pislaka account and original business records remain unchanged.</p>`,(f,d)=>{Sharing.terminate(state,id,'removed');selectedBusiness=null;answer='';d.close();save();render();flash('Member removed');});
       const submit=root.querySelector('dialog [type=submit]');submit.textContent='Remove';submit.className='listing-action confirm-danger';return;
     }
     if(a==='reset-organization'){
       modal('Reset organization?', '<p>This clears the organization, units, members and pending invitations saved in this browser so you can start again.</p>', (f,d)=>{
         d.close();clearTimeout(toastTimer);
-        state={version:1,org:null,units:[],members:[],invites:[],step:0,complete:false};
+        state=Sharing.migrate({version:2,org:null,units:[],members:[],invites:[],step:0,complete:false,accounts:state.accounts,business:state.business,businessSeeded:true,currentAccountId:state.currentAccountId});
         page='setup';tab='organization';resetFilters();collapsedUnits.clear();answer='';status='';save();render(true);
       });
       const submit=root.querySelector('dialog [type=submit]');submit.textContent='Reset organization';submit.className='listing-action confirm-danger';return;
@@ -287,7 +319,7 @@
     if(a==='next'){
       if(state.step===2){
         const unitExists=id=>id==='org'||state.units.some(u=>u.id===id);
-        const valid=state.org?.name?.trim() && state.members.some(m=>m.id===state.org.ownerId&&m.access==='Owner') && [...state.members,...state.invites].every(m=>unitExists(m.unitId)&&(m.role!=='Manager'||(m.scopes.length>0&&m.scopes.every(s=>unitExists(s.unitId)))));
+        const valid=state.org?.name?.trim() && state.members.some(m=>m.id===state.org.ownerId&&m.access==='Owner') && [...state.members,...state.invites.filter(i=>i.status==='pending')].every(m=>unitExists(m.unitId)&&(m.role!=='Manager'||(m.scopes.length>0&&m.scopes.every(s=>unitExists(s.unitId)))));
         if(!valid){flash('Check member assignments and management scopes before completing setup.');return;}
         state.complete=true;page='home';
       }else state.step++;
@@ -301,10 +333,18 @@
       if(id==='custom'){editUnit();return;}
     }
     if(a==='question'){
-      const replies=[`Your organization has ${state.members.length} members and ${state.members.filter(m=>m.role==='Manager').length} managers. No team activity is available yet.`, 'No follow-up activity is available yet.', `${state.units.filter(u=>u.type==='Branch').length} branches. No performance data is available yet.`];answer=replies[Number(id)];
+      answer=businessAnswer();
     }
     save();render(a!=='question'&&a!=='template');
   });
+  root.addEventListener('change',e=>{
+    if(e.target.id!=='tv-demo-account')return;
+    const id=e.target.value;
+    if(!state.accounts.some(a=>a.id===id)){const i=state.invites.find(i=>Sharing.accountId(i.email)===id);if(!i)return;state.accounts.push({id,email:i.email,name:i.email});}
+    state.currentAccountId=id;answer='';selectedBusiness=null;page=state.complete?'home':'setup';save();render();
+  });
+  save();
+  window.addEventListener('storage',e=>{if(e.key===KEY&&e.newValue){try{state=Sharing.migrate(JSON.parse(e.newValue));selectedBusiness=null;answer='';render();}catch{}}});
   window.TeamV1={open(){if(!state.complete)page='setup';render();}};
   if(location.hash==='#team')showView('team');
 })();

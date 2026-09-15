@@ -1,126 +1,131 @@
-# Team V1 · 组织与成员联动原型
+# Team V1 技术交接：邀请确认与账号级业务共享
 
-## 运行与演示
+本版延续 PR #1；静态前端 + localStorage。重点是实现 **邀请 → 本人接受并授权 → 按管理范围读取 → 退出停止共享**。本文替代旧版逐记录组织归属的建议。
 
-在仓库运行 `python3 -m http.server 4180`，访问 `http://127.0.0.1:4180/#team`。左侧导航顺序为 New chat → Listings → Leads → Team，首页 Team 专家入口也进入此工作区。
+## 1. 对照 Demo 实现什么
 
-首次设置：**Organization details → Organization & Members → Complete setup**。
+- 两步设置保持：Organization details → Organization & Members → Complete setup。创建组织时展示共享说明，创建按钮同时记录创建者授权。创建者仍为 Owner + Agent，不自动成为 Manager。
+- 第二步和 Settings 复用左侧组织树、右侧成员列表；保留节点增删改、折叠、成员筛选、备注姓名、单元分配、配置权限、业务角色、树形管理范围。单元名称必填，类型可选。
+- Invite member 只填写邮箱和拟配置；无论是否注册，都生成 Pending acceptance。不得查询全站账号并向邀请人展示姓名、公司或业务信息。备注姓名是邀请人自己填写的组织内称呼。
+- Pending 不计入正式成员或有效 Manager；其角色和管理范围未生效，也看不到其业务数量、摘要。Pending 不阻碍完成设置。支持模拟重发、撤销，默认有效期七天。
+- 被邀请模拟账号从 Team 看到邀请卡：组织、邀请人、单元、拟授予的 Organization Access / Business Role、Manager 管理范围、共享说明。Accept & Share Business Data 一次完成成员关系和授权，无二次弹窗；也可 Decline。
+- 已加入成员详情显示 Business sharing: Active、Existing and future business data、Accepted at。普通成员可 Leave Organization & Stop Sharing；Admin 也可退出，Owner 保留保护不支持退出/移除。
+- Team 首页三个卡片仍跳转联动设置（Managers 自动筛选）；业务区为最小只读预览。列表、详情、数量、Agent 示例摘要统一读取 `TeamSharing.visible()`，不另写业务统计。
+- 现有 Leads、Listings、聊天入口保持原样；本轮少量测试记录只用于 Team 共享预览，不冒充接入了这些页面的真实数据。
 
-- 创建组织填写名称、国家；默认 Pakistan，自动设置默认时区。时区在 Settings → Details → Advanced settings 修改。多时区国家的完整处理留给生产版本。
-- 创建者自动成为 Owner，拥有 Admin 配置能力，业务角色默认 Agent。无需 Team Account 或更换账号。
-- 设置进度、本地组织、成员和 Pending 邀请保留在 localStorage。旧版 Structure / Members / Review 草稿统一恢复到第二步；已完成组织不受影响。
-- 只有创建者、没有下级单元或仍有 Pending 邀请也可完成。完成时校验 Owner、成员归属和 Manager 范围。
-- 页面底部 Reset organization 经过确认后只清除 Team 的本地组织数据，回到空状态，便于反复演示。
+## 2. 本人确认的内容
 
-## 最终页面与交互
+说明版本：`account-business-v1`，创建者和受邀成员采用相同范围。
 
-### 统一组织与成员管理页
+> By joining or creating this organization, you agree to share all your existing and future leads, listings, and related business follow-up records in Pislaka with authorized managers at [organization] while you remain a member. This grants access; it does not transfer ownership.
 
-Settings 只保留 **Details / Organization & Members**。不再保留独立 Structure、Members 页面或成员侧栏。第二步设置也复用同一个联动工作区。
+中文含义：加入或创建组织即确认，在成员关系有效期间，组织内获得授权的管理者可查看本账号已有及新增的全部线索、房源和相关业务跟进记录；只授予访问权限，不转移归属、不复制数据。
 
-桌面左侧组织树，右侧成员列表；窄屏上下排列，组织树在上。节点选择、展开状态、列表筛选为当前视图状态，不写入业务权限。
+只包含 `lead / listing / followup`。不包含私人聊天、完整 WhatsApp 会话、账号安全、个人账单、本账号无权再共享的数据；合同等后续类型必须另行明确授权。只读查看、分析和建议，不因本次授权增加删除、转派、代发消息等写权限。
 
-### 左侧组织树
+退出提示：组织管理者将无法继续访问你的业务数据；你的 Pislaka 账号和原有业务记录不受影响。
 
-- 根节点与子单元用缩进、横向短线和纵向连接线展示层级，末尾分支连线终止。
-- 点击名称选中节点并更新右侧。名称旁的成员图标与人数常显，表示直接正式成员数，不包含后代或 Pending 邀请。
-- 名称旁提供 ＋、编辑、删除；桌面悬停或键盘聚焦整行时显示，触屏常显。不再使用更多菜单。
-- 有子单元的节点提供展开/收起箭头；叶节点保持对齐。默认展开，新增或移动单元后自动展开对应父级及祖先。
-- 从节点添加子单元自动设置父级，只填名称和类型。类型支持 Team / Branch / Region / Department / Other。
-- 编辑单元可调整父级，排除自身和后代，避免循环。删除需要确认；仍被子单元、成员或已保存/待邀请范围引用时拒绝删除。根组织不能作为单元删除。
-- 空结构保留 Simple Team / Teams & Branches / Custom Structure 快捷模板。
+## 3. 三种权限分开建模
 
-### 右侧成员列表及筛选
+| 字段 | 作用 | 不代表什么 |
+| --- | --- | --- |
+| Organization Access: Owner/Admin/Member | 组织配置权限，Owner 含 Admin 配置能力 | Owner/Admin 不直接获得业务读取权 |
+| Business Role: Manager/Agent | Manager 可以在有效范围内查看已授权业务 | Manager 不能查看范围外成员 |
+| Management Scope: unitId + includeSubUnits | 可选一个或多个中间节点；勾选包含后代则动态覆盖子树 | 本人所在单元不等于管理范围 |
 
-- 根组织显示全部成员；非根节点只显示直属成员。移除列表 Include sub-units、结果数量和顶部路径。
-- 紧凑搜索配合 Business Role（All / Agent / Manager）、Status（All / Active / Pending）文字按钮，条件取交集，切换节点保留筛选。
-- Display name 为可选组织内备注姓名，存于成员关系或邀请，保留账号 name；搜索覆盖备注、账号姓名和邮箱。
-- 成员行精简显示姓名/邮箱、业务角色、Owner/Admin、待接受状态及操作。根组织视图附简短归属名称，管理范围在编辑器查看。
-- 编辑成员可调整归属、组织访问角色、业务角色和管理范围。成员调动后，左侧直接人数与右侧筛选结果立即同步。
-- 移除成员需要确认，只移出组织，不删除账号；Owner 不提供移除入口且事件处理拒绝移除 Owner。
-- Pending 邀请支持 Resend / Revoke；不计入首页正式成员或 Manager 数量。
+组织树通过 `parentId` 表示父子关系；成员归属一个单元（或根组织）。管理范围取多个授权节点的并集，没有排除规则。范围覆盖成员当前所属单元，结合该成员账号有效共享授权，动态读取同一份账号业务。后续新增记录无需再次选择共享，历史记录也不需复制。
 
-### 首页卡片
+前端区分手动勾选和继承勾选；树形勾选只是编辑范围的表达。修改单元归属、父子关系或管理范围后，下一次查询按新关系计算，不缓存旧权限结论。
 
-Organization、Members、Managers 卡片均可点击。前两者进入联动页并选择根组织、查看全部成员；Managers 自动筛选 Business Role=Manager、Status=Active。Organization Settings 也进入联动页。Details 单独编辑组织基础信息。
+V1 同一账号同时只向一个组织启用业务共享；不做多组织切换、跨组织迁移、所有权转移和注销组织。正式记录级业务归属/项目级选择留待后续，当前仍以账号为数据所有者。
 
-### 视觉与表单
+## 4. 后端最小数据表建议
 
-复用网站品牌色、浅色/深色主题变量和 Listings 按钮风格；品牌色实底按钮为白字，危险操作确认按钮为红底白字。组织操作保持轻量，不添加说明性横幅。
+可按现有项目命名调整；所有 ID 使用稳定主键，邮箱不能替代已认证 accountId。
 
-下拉使用页面内组件，紧贴字段、同宽、底部不足时向上展开，支持方向键、Home/End、Enter、Escape、Tab 和点击外部关闭。删除图标带可访问名称，节点支持键盘聚焦与折叠按钮的 aria-expanded 状态。
-
-## 权限模型与继承
-
-三个维度独立保存：
-
-| 维度 | 含义 |
+| 表/对象 | 必要字段及约束 |
 | --- | --- |
-| Organization Access | Owner / Admin / Member；谁能配置组织及成员 |
-| Business Role | Manager / Agent；业务职责 |
-| Management Scope | 哪些单元的业务可被 Manager 管理 |
+| Account（复用） | id、规范化邮箱、用户姓名；身份来自认证会话 |
+| Organization | id、name、country、timezone、ownerMembershipId、createdAt |
+| OrganizationUnit | id、organizationId、parentId、name、type 可空；禁止循环、跨组织父节点 |
+| Invitation | id、organizationId、targetEmail、可选 targetAccountId、invitedByAccountId、displayName、unitId、proposedAccess、proposedRole、proposedScopes、status、sentAt、expiresAt、acceptedAt 可空、membershipId 可空 |
+| Membership | id、organizationId、accountId、unitId、displayName、access、role、joinedAt、endedAt、endedReason；只在本人接受/创建组织后有效 |
+| ManagementScope | membershipId、unitId、includeSubUnits；与有效成员关系关联，不能用 Pending 范围授权 |
+| BusinessSharingGrant | id、membershipId、organizationId、accountId、active、types、existingAndFuture=true、consentVersion、acceptedAt、terminatedAt、terminationReason |
+| Lead / Listing / FollowUp（复用） | id、ownerAccountId、业务字段；明确是否允许再次共享，跟进记录关联业务对象；不在接受邀请时拷贝数据或改 owner |
 
-成员归属单元只表示属于哪里，不自动授予对应管理范围。Admin 不自动获得全组织业务访问能力。Owner 包含 Admin 配置能力，不需要并列保存两条冲突角色。
+Demo 直接在邀请内保存拟配置，成员内保存 scopes，授权数组关联 membershipId；离开后的成员移入 terminatedMembers，保留授权终止记录。
 
-Manager 必须有至少一个范围。范围按组织树选择：选择节点仅覆盖直接归属业务；Include sub-units 覆盖所有后代，包括未来新增单元。下级显示继承选中及来源，不能直接取消；取消上级覆盖后，原有独立授权保留，纯继承勾选消失。跨分支可多选。独立授权与计算覆盖分开，继承结果不逐节点写入 Scope。切换 Agent 保存后清除管理范围。V1 不提供排除子节点等复杂例外规则。
+正式数据库：为有效成员关系、有效单组织授权、同组织同邮箱 Pending 邀请建立唯一性约束（可采用条件索引/事务锁）。接受邀请应在同一事务中锁定邀请，校验身份/状态/有效期/单组织限制，建立成员和授权并标记已接受。重复提交返回既有结果；退出后重复旧请求不得恢复关系。拒绝、撤销、过期不可接受。
 
-## 数据对象建议
+## 5. 需要哪些应用 API
 
-| 对象 | 主要字段与约束 |
+以下是正式实现建议，Demo 未调用这些接口。
+
+| API | 输入/输出要点与授权 |
 | --- | --- |
-| Account | id, display_name, normalized_email；全局身份、邮箱精确匹配 |
-| Organization | id, name, country_code, timezone, owner_account_id, setup_status, version |
-| OrganizationUnit | id, organization_id, parent_id, name, type（可空）, status, version；同组织父级、无环、建议同父级名称唯一 |
-| OrganizationMembership | id, organization_id, account_id, home_unit_id, organization_access, business_role, status；同组织同账号唯一 |
-| ManagementScope | id, membership_id, unit_id, include_sub_units；仅 Manager，多条范围取并集；保留独立授权 |
-| OrganizationInvitation | id, organization_id, normalized_email, inviter_id, proposed_access, proposed_role, home_unit_id, proposed_scopes, status, sent_at, expires_at, accepted_at, token_hash, version |
-| AuditEvent | actor, organization, action, target, before, after, occurred_at；组织与权限变更可审计 |
-| Business assignment | organization_id, assigned_membership_id, related_listing/lead/deal_id；业务范围查询依据 |
+| POST /organizations | 名称、国家、说明版本；事务创建 Owner+Agent、本人授权和组织 |
+| GET/PATCH /organizations/:id | Details；配置写入仅 Owner/Admin |
+| GET/POST/PATCH/DELETE /organizations/:id/units | 组织树；写入校验 Owner/Admin、父子关系、引用约束 |
+| GET /organizations/:id/members | unit、role、status、search、cursor；配置视图仅组织管理员，Pending 与 Active 区分 |
+| POST /organizations/:id/invitations | 邮箱、备注、单元、拟权限/角色/范围；仅 Pending，不返回全站账号资料 |
+| POST /invitations/:id/resend 或 /revoke | 仅组织配置管理员；重发不等于接受 |
+| GET /me/invitations | 只返回当前已认证账号邮箱对应的邀请，不信任客户端 accountId |
+| POST /invitations/:id/accept | consentVersion + 幂等键；本人、有效邀请、单组织检查；事务写成员和授权 |
+| POST /invitations/:id/decline | 本人拒绝有效 Pending |
+| POST /organizations/:id/sharing-consent | 已有 Owner 本人补确认旧数据的授权，幂等；不能为他人确认 |
+| PATCH /memberships/:id | 修改单元、备注、access、role、scopes；仅配置管理员；Owner 保护 |
+| GET /memberships/:id/sharing | 本人或组织配置管理员查看授权范围、版本、时间，不包含业务内容 |
+| POST /memberships/:id/leave | 本人退出；同时终止授权，Owner 拒绝 |
+| DELETE /memberships/:id | 管理员移除；同时终止授权，Owner 拒绝 |
+| GET /organizations/:id/business | type、cursor；只返回当前有效管理范围内已授权记录 |
+| GET /organizations/:id/business/:type/:recordId | 每次重新检查；禁止依赖之前列表已授权 |
+| GET /organizations/:id/business-summary | 统计使用与列表相同的授权数据集 |
+| POST /organizations/:id/agent-summary | 只将同一授权查询结果交给模型；输出不允许混入未授权缓存 |
 
-Demo 用 `org` 表示根，生产应映射明确的组织级范围或空 unit_id，不直接拿字符串当外键。创建 Organization 与 Owner Membership 是原子事务。最后一个 Owner 不能删除/降级；Owner 转移不在原型范围。
+**每次读取业务必须在服务端检查：已认证身份、有效成员关系、有效共享授权、业务操作权限、管理范围。** 本版 Demo 还要求管理者自己的成员/共享关系有效。读取目标记录也必须属于有效授权账号和明确许可类型。
 
-邀请状态建议 Pending / Accepted / Revoked / Expired。同组织同邮箱待处理邀请唯一；重发记录发送时间并约定令牌轮换；撤销使令牌失效；接受时核验登录邮箱、有效期、角色和范围，并幂等创建 Membership / Scope。Pending 的角色与范围不生效。
+普通成员不能相互读取全部业务；Owner/Admin 仅配置身份不能读取。列表、详情、统计、Agent 上下文和摘要均执行同样检查；不能先读取全部再只在前端隐藏。
 
-## API / MCP 候选清单
+退出/移除在事务内终止成员和授权。权限或范围变化需要使业务缓存失效，前端清空旧详情、统计和回答并重取；不删除或改归属业务记录。正式并发请求与流式 Agent 响应也需处理权限变更后的输出取消/重新校验。
 
-页面可以直接调用应用 API，未来 MCP 与 API 复用领域服务，不必先为页面搭 MCP。
+## 6. MCP 如何配置
 
-| 工具 | 用途 |
-| --- | --- |
-| get_organization_context | 当前登录主体对应的组织、成员身份、业务角色、有效范围、设置状态 |
-| get_organization_structure | 可见组织树、直接成员数与版本 |
-| list_organization_members | 节点、包含后代、搜索、角色、状态、分页；按授权返回结果 |
-| lookup_account_by_email | 精确邮箱匹配，返回最少必要信息，限频防止全站枚举 |
-| create_organization | 创建组织与 Owner，支持幂等 |
-| upsert_organization_unit / delete_organization_unit | 单元新增、编辑、删除，校验父级、循环、引用、版本 |
-| add_existing_organization_member | 已有账号加入组织，校验重复及权限上限 |
-| update_organization_member / remove_organization_member | 调整归属、角色，移除组织关系；Owner 保护 |
-| preview_management_scope / set_management_scope | 服务端计算范围与变更影响，保存独立授权 |
-| create/list/resend/revoke_organization_invitation | 邀请生命周期管理；接受走应用登录/API 流程 |
-| complete_organization_setup | 校验必要配置并完成设置 |
-| get_team_priorities | 授权范围内的团队优先事项及来源 |
-| get_agent_followup_summary | 授权范围内跟进情况与来源 |
-| get_unit_performance | 同周期、同口径的授权单元业绩对比 |
+MCP 是这些应用服务的另一入口，不新建独立权限规则。会话绑定已认证账号与组织上下文，模型传入的 accountId/scope 不能用来扩大权限。
 
-服务端从已认证主体计算上下文，所有读写均校验组织成员关系、配置权限或业务范围；不信任前端组织 ID、邮箱匹配结果、actor、Scope。列表筛选不是安全边界。写入使用版本校验、幂等和审计。业务统计需定稿“成员调动后的历史业务归属口径”。Admin 可授予的角色上限也需定稿。
+| MCP tool 建议 | 复用服务 | V1 用途 |
+| --- | --- | --- |
+| team_get_context | 当前成员、角色、有效管理范围 | 判断当前用户可执行的能力 |
+| team_list_units / team_list_members | 组织/成员查询 | 按调用者权限提供结构或成员信息 |
+| team_list_business | 授权业务列表 | 只读检索线索、房源、跟进 |
+| team_get_business | 授权详情 | 每次校验记录访问 |
+| team_get_business_summary | 授权统计 | 给 Agent 生成分析/建议 |
 
-## 演示数据与实现边界
+设置类 API 优先保留页面交互；如未来暴露邀请、移除等 MCP 工具，仍复用同一服务权限和确认机制。**接受邀请/共享授权必须由本人明确确认，不能让管理员或 Agent 代为接受。** 本轮不接真实 MCP，不配置删除、转派、代发消息工具。
 
-静态 HTML/CSS/JS，无构建依赖。本地键 `pislaka.team-v1.v1`。不连接真实账号目录，不实际发邮件，不访问真实业务数据或 MCP。
+## 7. 本地兼容与演示
 
-已有账号示例：`ayesha@pislaka.example`、`sara@pislaka.example`、`ali@pislaka.example`；未知邮箱如 `new.member@example.com` 演示邀请。旧版缺少邮箱的成员使用占位邮箱，不能据此迁移真实账号。邀请接受及过期不在此 Demo 中实现。管理问题只显示当前组织数量或无活动数据，避免伪造业务表现。
+存储键仍为 `pislaka.team-v1.v1`，内容 version 升为 2。迁移前在 `.before-sharing` 备份一次原 version1 数据；不清空组织和单元。旧非 Owner 直接加入关系改为 Pending，保留原拟单元和权限，不编造接受时间。旧 Owner 保留身份但没有共享授权，需在首页本人补确认。授权新版本不能静默当作旧版已同意。
 
-主要文件：`index.html` 导航整合；`team-v1.js` 状态、树、筛选、表单与本地存储；`team-v1.css` 独立界面样式。
+使用独立 origin 测试，例：仓库执行 `python3 -m http.server 4181 --bind 127.0.0.1`，打开 `http://127.0.0.1:4181/#team`。用户原 `4180` 数据不受影响。
 
-## 本轮验证
+演示顺序：
+1. Ayesha 创建组织（旧组织先补确认）；编辑自己为 Manager，管理范围选择根组织并包含后代。她默认仍是 Agent，需要明确配置。
+2. Invite member 填 `ahmed@pislaka.example`，可指定单元；也可邀请未知邮箱验证只生成 Pending。完成设置，业务预览为 0。
+3. 展开 Demo controls 切换 Ahmed，点击 Accept & Share Business Data。
+4. 切回 Ayesha，看到 Ahmed 的三条历史测试业务（线索、房源、跟进各一）；View 查看详情。
+5. Demo controls 给 Ahmed 新增一条线索/房源；列表和统计同步增加，点击首页示例问题获得同源摘要。
+6. Ahmed 为 Agent 时共享业务视图为 0；可同样邀请 Sara 为普通成员验证隔离。Admin 若未设 Manager 或 Manager 范围不覆盖 Ahmed 也不能查看。
+7. Ahmed 点击 Leave Organization & Stop Sharing，或 Ayesha 在成员列表移除他；切回管理者业务为 0。记录仍保留，重新邀请必须重新接受。
 
-- JavaScript 语法、Git diff 检查通过。
-- 首页三个卡片跳转、Managers 的预置筛选、根组织与直接节点成员筛选。
-- 搜索、键盘清空搜索、Active/Pending、角色筛选及空结果状态。
-- 从当前节点添加邀请时归属常驻且自动带入；成员调动更新结果与节点人数。
-- 子级筛选、折叠隐藏后代、新增子级自动展开父级；键盘可聚焦隐藏的节点操作。
-- 桌面左右布局、390×844 窄屏上下布局及清晰树形连接线。
-- 两步设置，无单元、只有创建者及 Pending 邀请均可完成，刷新后保持完成。
-- 浏览器无 error/warn；使用 localhost 独立测试组织，保留用户 127.0.0.1 当前组织数据。
+Demo controls 用稳定 `accountId` 切换模拟身份，提供测试业务新增和 Pending 过期模拟。未知邮箱会作为测试身份进入该演示控件；这不是全站账号搜索或正式管理员代操作。账号切换仅影响 Team 模拟，原 Leads/Listings 的样例身份未重建。
 
-本轮界面调整：两栏等高并独立滚动；手机端上下排列。Unit name 必填，Unit type 选填默认空，树中仅展示节点名称。备注字段 `displayName` 需在正式成员关系和邀请对象中分别保留。
+Reset organization 需确认，只重置 Team 组织测试状态，保留测试业务记录。它不是生产注销组织能力。
+
+## 8. 验证与交付记录
+
+自动验证：`node --test tests/team-sharing.test.cjs`，12 项通过。覆盖 Pending 不授权、错误账号、拒绝/撤销/过期、重复接受、历史和新增动态共享、普通成员/无范围 Admin/范围外 Manager、后代范围、退出/移除/撤销范围、重新邀请、旧数据迁移、刷新序列化、单组织限制、Owner 保护、排除类型和不可再共享记录、未知邮箱。
+
+浏览器实测（独立 4181 origin）：两步创建、Owner 角色/范围编辑、已有账号 Pending 且成员仍为 1、Pending 不阻挡完成、Ahmed 本人邀请卡、接受后历史业务 3 条、新增后 4 条且 Agent 统计一致、Agent 无管理业务、退出后 0 条、刷新仍为 0。另已验证未知邮箱 Pending、模拟重发/撤销、组织树模板新增、成员搜索空结果、原 Leads/Listings 页面正常打开。390px 窄屏时组织/成员容器单列排列，宽度 352px，页面无横向溢出（scrollWidth=clientWidth=390）。
+
+待正式后端完成：真实认证及邮箱归属验证、事务/幂等与唯一约束、持久数据库、真实邀请通知、授权审计、实时失效/缓存隔离、业务表及不可再共享数据过滤、API 与 MCP 服务端统一授权、并发与安全测试。前端隐藏按钮、localStorage 和本地筛选仅为演示，不代表正式权限安全已实现。
